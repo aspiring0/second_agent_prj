@@ -32,4 +32,8 @@ def main():
     vector_manager.create_vector_db(chunks)
 
 if __name__ == "__main__":
+    #添加分割线
+    logger.info("="*50)
+    logger.info(f"新的入库任务启动（PID：{os.getpid()}）")
+    logger.info("="*50)
     main()

@@ -26,31 +26,34 @@ class VectorDBManager:
             openai_api_base=settings.OPENAI_BASE_URL
         )
 
-    def create_vector_db(self, chunks):
+    def create_vector_db(self, chunks,mode="append"):
         """
         阶段三：入库 (Load)
         将文本块向量化并存入 ChromaDB
         """
         # 1. 检查是否需要清理旧数据
         # 在开发阶段，为了保证数据纯净，每次入库我们通常选择“重建”
-        if settings.DB_DIR.exists():
+        if mode=="overwrite" and settings.DB_DIR.exists():
             logger.warning(f"🧹 检测到旧数据库，正在清理: {self.persist_dir}")
             shutil.rmtree(self.persist_dir)
 
-        logger.info("💾 正在调用 Embedding 接口进行向量化 (这可能需要一点时间)...")
+        # 2. 初始化数据库连接
+        # 如果目录存在且有数据，Chroma 会自动加载旧数据
+        vectordb = Chroma(
+            persist_directory=self.persist_dir,
+            embedding_function=self.embedding_fn
+        )
+
+        logger.info(f"💾 正在以 [{mode}] 模式写入数据...")
         
         try:
-            # 2. 创建并持久化
-            # from_documents 会自动做两件事：
-            #   a. 调用 OpenAI 接口把 chunks 变成向量
-            #   b. 把向量和原文存入本地文件夹
-            vectordb = Chroma.from_documents(
-                documents=chunks,
-                embedding=self.embedding_fn,
-                persist_directory=self.persist_dir
-            )
-            logger.info(f"🎉 知识库构建成功！数据已保存至: {self.persist_dir}")
+            # 3. 添加新文档 (add_documents 而不是 from_documents)
+            # 注意：Chroma 会自动分配 ID，如果要防止同一份文件被重复添加，
+            # 需要更复杂的逻辑（比如计算文件 Hash），我们暂时先做基础的追加。
+            vectordb.add_documents(documents=chunks)
+            
+            logger.info(f"🎉 入库成功！新增块数: {len(chunks)}")
             return vectordb
         except Exception as e:
-            logger.error(f"❌ 向量化过程失败: {e}")
+            logger.error(f"❌ 入库失败: {e}")
             raise e

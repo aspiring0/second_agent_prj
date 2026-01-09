@@ -3,7 +3,7 @@ import logging
 import sys
 # 引入刚才写好的配置，直接拿到日志存放路径，体现了配置集中的好处
 from config.settings import settings
-
+from logging.handlers import RotatingFileHandler
 def setup_logger(name):
     """
     配置并返回一个 logger 对象
@@ -33,8 +33,17 @@ def setup_logger(name):
     
     # 6. 处理器 B：输出到文件 (app.log)
     # encoding='utf-8' 防止中文乱码
-    file_path = settings.LOG_DIR / "app.log"
-    file_handler = logging.FileHandler(file_path, encoding="utf-8")
+    # file_path = settings.LOG_DIR / "app.log"
+    # file_handler = logging.FileHandler(file_path, encoding="utf-8")
+    #文件输出，带轮转功能
+    file_handler = RotatingFileHandler(
+        filename=settings.LOG_DIR / "app.log",
+        maxBytes=5*1024*1024,  # 5 MB
+        backupCount=5,
+        encoding="utf-8"
+    )
+
+
     file_handler.setFormatter(formatter)
 
     # 7. 装载处理器

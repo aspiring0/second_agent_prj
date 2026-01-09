@@ -1,20 +1,33 @@
-# main.py
+# main.py (或 test_rag_complete.py)
+import sys
 import os
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
-# 1. 加载环境变量
-load_dotenv()
+# 路径补丁
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# 2. 初始化模型
-llm = ChatOpenAI(
-    model="gpt-3.5-turbo", # 或者 deepseek-chat 等
-    temperature=0
-)
+from src.rag.generator import RAGGenerator
 
-# 3. 测试调用
-try:
-    response = llm.invoke("你好，请只回复三个字：环境通畅")
-    print(f"测试结果: {response.content}")
-except Exception as e:
-    print(f"连接失败: {e}")
+def main():
+    print("🚀 启动企业级 RAG 问答系统...")
+    
+    # 初始化生成器
+    rag = RAGGenerator()
+    
+    while True:
+        # 让用户在终端输入问题
+        question = input("\n🙋 请输入问题 (输入 'exit' 退出): ")
+        if question.lower() in ["exit", "quit"]:
+            break
+            
+        if not question.strip():
+            continue
+            
+        print("-" * 50)
+        # 获取答案
+        answer = rag.get_answer(question)
+        
+        print(f"🤖 AI 回答:\n{answer}")
+        print("-" * 50)
+
+if __name__ == "__main__":
+    main()
