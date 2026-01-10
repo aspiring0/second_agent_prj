@@ -52,15 +52,15 @@ class RAGGenerator:
         """
         return "\n\n".join([doc.page_content for doc in docs])
 
-    def get_answer(self, question: str):
+    def get_answer(self, question: str, session_id=None):
         """
         生成回答
         question: 用户输入的问题
         """
-        logger.info(f"正在生成回答... 问题: {question}")
+        logger.info(f"🤖 收到问题: {question} (Session: {session_id})")
 
         # 1. 初始化检索器
-        docs = self.retriever.query(question,top_k=3)
+        docs = self.retriever.query(question,session_id=session_id,top_k=3)
         # 兜底逻辑：如果数据库是空的，或者啥也没查到，直接返回，省点 API 钱
         if not docs:
             return logger.warning("⚠️ 知识库中没有任何相关文档。")

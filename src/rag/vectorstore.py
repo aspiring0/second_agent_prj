@@ -26,33 +26,37 @@ class VectorDBManager:
             openai_api_base=settings.OPENAI_BASE_URL
         )
 
-    def create_vector_db(self, chunks,mode="append"):
+    def create_vector_db(self, chunks, session_id=None): # <--- 改动1: 增加 session_id 参数
         """
-        阶段三：入库 (Load)
-        将文本块向量化并存入 ChromaDB
+        chunks: 切分好的文档块
+        session_id: 如果提供了 session_id，这些文档将只属于该会话
         """
-        # 1. 检查是否需要清理旧数据
-        # 在开发阶段，为了保证数据纯净，每次入库我们通常选择“重建”
-        if mode=="overwrite" and settings.DB_DIR.exists():
-            logger.warning(f"🧹 检测到旧数据库，正在清理: {self.persist_dir}")
-            shutil.rmtree(self.persist_dir)
+        # 如果没有chunks，直接返回
+        if not chunks:
+            logger.warning("没有需要入库的文档块")
+            return None
 
-        # 2. 初始化数据库连接
-        # 如果目录存在且有数据，Chroma 会自动加载旧数据
-        vectordb = Chroma(
-            persist_directory=self.persist_dir,
-            embedding_function=self.embedding_fn
-        )
+        # --- 改动2: 给每个 chunk 强制增加 metadata ---
+        if session_id:
+            logger.info(f"🏷️ 正在为 {len(chunks)} 个文档块打上会话标签: {session_id}")
+            for chunk in chunks:
+                # 在原有的 metadata (如 source) 基础上，追加 session_id
+                chunk.metadata["session_id"] = session_id
+        else:
+            # 如果没传 session_id，标记为 "global" (公共知识库)
+            for chunk in chunks:
+                chunk.metadata["session_id"] = "global"
 
-        logger.info(f"💾 正在以 [{mode}] 模式写入数据...")
+        logger.info(f"💾 正在写入向量数据库 (Mode: Append)...")
         
         try:
-            # 3. 添加新文档 (add_documents 而不是 from_documents)
-            # 注意：Chroma 会自动分配 ID，如果要防止同一份文件被重复添加，
-            # 需要更复杂的逻辑（比如计算文件 Hash），我们暂时先做基础的追加。
+            vectordb = Chroma(
+                persist_directory=self.persist_dir,
+                embedding_function=self.embedding_fn
+            )
+            # 增量添加
             vectordb.add_documents(documents=chunks)
-            
-            logger.info(f"🎉 入库成功！新增块数: {len(chunks)}")
+            logger.info(f"🎉 入库成功！")
             return vectordb
         except Exception as e:
             logger.error(f"❌ 入库失败: {e}")

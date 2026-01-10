@@ -21,27 +21,40 @@ class VectorRetriever:
             logger.error(f"数据库目录不存在: {self.persist_dir}，请先运行入库脚本。")
             raise FileNotFoundError(f"数据库目录不存在: {self.persist_dir}")
         # 初始化 Chroma 数据库连接
-        self.vectordb = Chroma(
+        self.vector_db = Chroma(
             persist_directory=self.persist_dir,
             embedding_function=self.embeddings
         )
 
-    def query(self, question:str, top_k:int=3):
+    def query(self, question: str, session_id=None, top_k=3): # <--- 改动1: 增加 session_id
         """
-        使用向量数据库进行相似度检索
-        :param question: 用户查询的字符串
-        :param k: 返回的相似文档数量
-        :return: 最相似的 k 个文档
+        session_id: 当前会话ID。如果传入，则只检索该会话 + 公共库的内容。
         """
+        logger.info(f"🔍 检索: {question} [Session: {session_id}]")
+        
+        # --- 改动2: 构建过滤器 ---
+        # ChromaDB 的 filter 语法
+        filter_rule = {}
+        if session_id:
+            # 逻辑：session_id 等于 当前会话 OR session_id 等于 global
+            # 注意：Chroma 的 $or 语法在某些版本支持有限，
+            # 为简单起见，我们暂时先实现“只搜当前会话”的严格隔离。
+            # 如果你想搜“当前会话 + 公共”，逻辑会复杂一点，我们先做严格隔离。
+            filter_rule = {"session_id": session_id}
+        else:
+            # 如果没传 session_id，只搜公共库
+            filter_rule = {"session_id": "global"}
 
-        logger.info(f"正在检索与'{question}'相关的前 {top_k} 条文档...")
+        # --- 改动3: 传入 filter 参数 ---
         try:
-            docs = self.vectordb.similarity_search_with_score(
-                query=question,
-                k=top_k
+            results = self.vector_db.similarity_search_with_score(
+                question, 
+                k=top_k,
+                filter=filter_rule # <--- 关键：加上这行
             )
-            logger.info(f"检索到 {len(docs)} 条相关文档。")
-            return docs
+            logger.info(f"✅ 检索到 {len(results)} 条记录")
+            return results
         except Exception as e:
-            logger.error(f"检索失败: {e}")
-            raise e
+            # 这种情况通常是因为数据库里还没这个 session_id 的数据
+            logger.warning(f"检索为空或出错 (可能是新会话无数据): {e}")
+            return []

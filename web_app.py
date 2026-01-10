@@ -1,126 +1,140 @@
 # web_app.py
 import streamlit as st
+import uuid
 import os
-import shutil
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 
-# 引入我们的核心逻辑
 from src.agent.graph import app as agent_app
 from src.rag.etl import ContentProcessor
 from src.rag.vectorstore import VectorDBManager
 from config.settings import settings
+from src.utils.db import init_db, create_session, get_all_sessions, save_message, get_messages
 
-# --- 页面配置 ---
-st.set_page_config(page_title="企业级 RAG 智能助手", page_icon="🤖", layout="wide")
+# 初始化数据库
+init_db()
 
-st.title("🤖 企业级 RAG + Multi-Agent 协作系统")
+st.set_page_config(page_title="Agent 企业版 (隔离支持)", layout="wide")
 
-# --- 侧边栏：知识库管理 ---
+# --- 侧边栏：会话管理 ---
 with st.sidebar:
-    st.header("📚 知识库管理")
+    st.title("🗂️ 会话管理")
     
-    # 1. 文件上传组件
-    uploaded_files = st.file_uploader(
-        "上传文档 (TXT, MD)", 
-        type=["txt", "md"], 
-        accept_multiple_files=True
+    # 1. 新建会话
+    if st.button("➕ 新建聊天"):
+        new_id = str(uuid.uuid4())
+        create_session(new_id, f"对话 {new_id[:4]}")
+        st.session_state["current_session_id"] = new_id
+        st.rerun()
+
+    # 2. 获取会话列表
+    sessions = get_all_sessions()
+    if not sessions:
+        first_id = str(uuid.uuid4())
+        create_session(first_id, "默认对话")
+        st.session_state["current_session_id"] = first_id
+        st.rerun()
+
+    # 3. 切换会话逻辑
+    # 构造选项字典 {id: name}
+    session_map = {s[0]: s[1] for s in sessions}
+    session_ids = [s[0] for s in sessions]
+    
+    # 确保 session_state 里有值
+    if "current_session_id" not in st.session_state:
+        st.session_state["current_session_id"] = session_ids[0]
+    
+    # 保持选中状态
+    current_idx = 0
+    if st.session_state["current_session_id"] in session_ids:
+        current_idx = session_ids.index(st.session_state["current_session_id"])
+        
+    selected_id = st.selectbox(
+        "选择历史对话:", 
+        options=session_ids,
+        format_func=lambda x: session_map[x],
+        index=current_idx
     )
     
-    # 2. 上传与重建按钮
-    if st.button("🚀 更新知识库"):
-        if not uploaded_files:
-            st.warning("请先选择文件！")
-        else:
-            status_text = st.empty()
-            status_text.info("正在处理文件...")
-            
-            # 确保目录存在
-            if not settings.DATA_DIR.exists():
-                settings.DATA_DIR.mkdir(parents=True)
-            
-            # 保存上传的文件到 data/raw
-            saved_count = 0
-            for uploaded_file in uploaded_files:
-                file_path = settings.DATA_DIR / uploaded_file.name
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                saved_count += 1
-            
-            status_text.info(f"文件保存成功 ({saved_count} 个)，开始构建索引...")
-            
-            # --- 调用后端逻辑 (ETL + 入库) ---
-            try:
-                # 1. 加载与切分
-                processor = ContentProcessor()
-                docs = processor.load_documents()
-                chunks = processor.split_documents(docs)
-                
-                # 2. 向量化入库 (使用 append 模式)
-                vector_manager = VectorDBManager()
-                vector_manager.create_vector_db(chunks, mode="append")
-                
-                status_text.success("✅ 知识库更新完成！Agent 已读取最新文档。")
-            except Exception as e:
-                status_text.error(f"❌ 更新失败: {e}")
+    # 检测切换
+    if selected_id != st.session_state["current_session_id"]:
+        st.session_state["current_session_id"] = selected_id
+        st.rerun()
+
+    current_session_id = st.session_state["current_session_id"]
 
     st.divider()
-    st.markdown("### 调试信息")
-    st.info(f"当前模型: {settings.CHAT_MODEL}")
+    
+    # --- 关键修改：带隔离的上传 ---
+    st.markdown("### 📚 当前会话知识库")
+    st.info(f"上传的文件将仅对【{session_map[current_session_id]}】可见")
+    
+    uploaded_files = st.file_uploader("上传文档", accept_multiple_files=True)
+    
+    if st.button("🚀 更新当前会话知识库"):
+        if uploaded_files:
+            # 注意：这里不需要 check data 目录是否存在了，因为我们根本不存
 
-# --- 主界面：聊天窗口 ---
+            status = st.empty()
+            status.info(f"正在内存处理 {len(uploaded_files)} 个文件...")
+            
+            try:
+                processor = ContentProcessor()
+                
+                # 🟢 核心修改：直接传 uploaded_files 对象列表
+                # 不再需要传路径列表了
+                docs = processor.load_uploaded_files(uploaded_files)
+                
+                if not docs:
+                    status.warning("⚠️ 未能解析出有效内容")
+                else:
+                    chunks = processor.split_documents(docs)
+                    
+                    # 入库 (带 session_id)
+                    VectorDBManager().create_vector_db(chunks, session_id=current_session_id)
+                    
+                    status.success(f"✅ 入库成功！新增 {len(chunks)} 个片段。")
+                    
+            except Exception as e:
+                status.error(f"❌ 失败: {e}")
 
-# 1. 初始化聊天历史 (Session State)
-# Streamlit 每次刷新都会重置变量，所以需要用 session_state 记住聊天记录
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# --- 主界面 ---
+st.header(f"💬 {session_map[current_session_id]}")
 
-# 2. 显示历史消息
-for message in st.session_state.messages:
-    # message 是 (role, content) 的字典
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# 加载历史
+db_messages = get_messages(current_session_id)
+for msg in db_messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# 3. 处理用户输入
-if prompt := st.chat_input("请输入你的问题..."):
-    # A. 显示用户消息
+if prompt := st.chat_input("输入问题..."):
     with st.chat_message("user"):
         st.markdown(prompt)
-    # 记录到历史
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    save_message(current_session_id, "user", prompt)
 
-    # B. 调用 Agent (显示思考过程)
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
+        status_box = st.status("Agent 思考中...", expanded=True)
         full_response = ""
-        
-        # 构造 LangGraph 输入
         inputs = {"messages": [HumanMessage(content=prompt)]}
         
-        # 实时流式输出 (Stream)
-        # 这里的 stream 稍微复杂点，因为我们要过滤出“最终回答”
+        # 🟢 关键点：把 session_id 打包进 config 传给 Agent
+        # 这样 Agent 跑到 tools.py 时，就能拿出这个 id
+        run_config = {"configurable": {"session_id": current_session_id}}
+        
         try:
-            status_container = st.status("🤖 Agent 正在思考...", expanded=True)
-            
-            for event in agent_app.stream(inputs):
+            # 传入 config
+            for event in agent_app.stream(inputs, config=run_config):
                 for node_name, node_output in event.items():
-                    # 在折叠面板里显示思考过程
                     if node_name == "researcher":
-                        status_container.write("🔍 研究员: 正在分析需求...")
+                        status_box.write("🔍 研究员: 分析需求...")
                     elif node_name == "tools":
-                        status_container.write("📚 工具: 正在检索知识库...")
+                        status_box.write("📚 工具: 检索【当前会话】资料...")
                     elif node_name == "writer":
-                        status_container.write("✍️ 作家: 正在撰写回复...")
-                        # 拿到最终结果
-                        final_msg = node_output["messages"][-1]
-                        full_response = final_msg.content
+                        status_box.write("✍️ 作家: 整理回答...")
+                        full_response = node_output["messages"][-1].content
             
-            status_container.update(label="✅ 回答完成", state="complete", expanded=False)
-            
-            # 显示最终回答
-            message_placeholder.markdown(full_response)
-            
-            # 记录 AI 回答到历史
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            status_box.update(label="✅ 完成", state="complete", expanded=False)
+            st.markdown(full_response)
+            save_message(current_session_id, "assistant", full_response)
             
         except Exception as e:
-            st.error(f"发生错误: {e}")
+            st.error(f"Error: {e}")
