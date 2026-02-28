@@ -23,10 +23,10 @@ class Settings:
     
     # --- RAG 业务参数 ---
     # 切片大小：决定了喂给大模型的知识片段有多长
-    CHUNK_SIZE = 500
+    # 对于中文，建议 800-1000 字符（约 400-600 汉字）
+    CHUNK_SIZE = 800
     # 重叠大小：防止切片时把一句话切断了，保留一点上下文
-    CHUNK_OVERLAP = 50
-    CHUNK_SIZE = 500
-    CHUNK_OVERLAP = 50
+    CHUNK_OVERLAP = 100
+
 # 实例化对象，方便其他模块直接 import settings
 settings = Settings()

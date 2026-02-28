@@ -7,7 +7,17 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from config.settings import settings
 from src.agent.state import AgentState
-from src.agent.tools import ask_knowledge_base
+from src.agent.tools import (
+    ask_knowledge_base, 
+    list_knowledge_base_files, 
+    search_by_filename,
+    general_qa,
+    summarize_text,
+    translate_text,
+    analyze_code,
+    get_current_time,
+    calculate_expression
+)
 from src.utils.logger import setup_logger
 
 logger = setup_logger("MultiAgent_Nodes")
@@ -19,10 +29,25 @@ llm = ChatOpenAI(
     openai_api_base=settings.OPENAI_BASE_URL
 )
 
+# 所有可用工具
+all_tools = [
+    # 知识库相关
+    ask_knowledge_base,
+    list_knowledge_base_files,
+    search_by_filename,
+    # 通用能力
+    general_qa,
+    summarize_text,
+    translate_text,
+    analyze_code,
+    get_current_time,
+    calculate_expression
+]
+
 # 关键点：bind_tools
-# 它的作用是告诉大模型：“你可以使用这些工具”。
+# 它的作用是告诉大模型："你可以使用这些工具"。
 # 这样模型在输出时，就有可能输出 tool_calls (工具调用请求)，而不仅仅是文本。
-llm_with_tools = llm.bind_tools([ask_knowledge_base])
+llm_with_tools = llm.bind_tools(all_tools)
 
 #角色1：研究员
 def researcher_node(state: AgentState) -> AgentState:
@@ -34,11 +59,48 @@ def researcher_node(state: AgentState) -> AgentState:
     messages = state["messages"]
     #人设
     system_prompt = SystemMessage(content="""
-    你是公司的首席数据研究员。
-    你的职责是根据用户的问题，利用【知识库查询工具】去检索精确的事实。
-    不要自己编造数据，一切以工具返回的结果为准。
-    如果你觉得已经查到了足够的信息，就停止调用工具。                          
-    """)
+你是一个全能的智能助手，具备多种技能来帮助用户解决各类问题。
+
+【可用工具分类】：
+
+📌 知识库工具（用于查询企业/个人文档）：
+- list_knowledge_base_files: 列出知识库中所有文件
+- search_by_filename: 按文件名或类型搜索（如"pdf"、"py"、"xxx.pdf"）
+- ask_knowledge_base: 语义搜索知识库内容
+
+📌 通用能力工具：
+- general_qa: 通用问答（编程、概念、建议等不需要知识库的问题）
+- summarize_text: 文本总结
+- translate_text: 翻译文本
+- analyze_code: 代码分析
+- get_current_time: 获取当前时间
+- calculate_expression: 数学计算
+
+【智能路由策略】：
+
+1️⃣ 判断问题类型：
+   - 涉及企业/个人文档、上传的文件 → 使用知识库工具
+   - 编程问题、概念解释、一般建议 → 使用 general_qa
+   - 文本处理（总结/翻译） → 使用对应工具
+   - 代码分析 → 使用 analyze_code
+   - 时间查询 → 使用 get_current_time
+   - 数学计算 → 使用 calculate_expression
+
+2️⃣ 多工具协作：
+   - 用户问"整理PDF内容"→ 先 search_by_filename("pdf") 获取内容
+   - 用户问"总结这个文件"→ 先搜索文件，再 summarize_text
+   - 复杂问题可以多次调用不同工具
+
+3️⃣ 优先级：
+   - 如果用户明确提到文件名或文件类型，优先用 search_by_filename
+   - 如果问题与知识库文档相关，优先用 ask_knowledge_base
+   - 如果是通用问题，直接用 general_qa
+
+【重要规则】：
+- 必须使用工具获取信息，不要自己编造
+- 工具返回的内容就是事实依据
+- 查到足够信息后停止调用工具，让 writer 完成回答
+""") 
 
     # 3. 调用模型
     # 我们把 [人设] + [历史记录] 一起发给模型

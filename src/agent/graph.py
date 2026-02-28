@@ -19,8 +19,7 @@ ToolNode: 这是一个神器。
 from langgraph.prebuilt import ToolNode
 
 from src.agent.state import AgentState
-from src.agent.nodes import researcher_node, writer_node
-from src.agent.tools import ask_knowledge_base
+from src.agent.nodes import researcher_node, writer_node, all_tools
 
 # 1. 创建图实例，传入我们定义的状态结构
 workflow = StateGraph(AgentState)
@@ -33,7 +32,7 @@ workflow.add_node("writer", writer_node)
 
 # ToolNode 是 LangGraph 预置的，我们只需要把工具列表传给它
 # 它会自动识别 messages 里的 tool_calls 并执行
-workflow.add_node("tools", ToolNode([ask_knowledge_base]))
+workflow.add_node("tools", ToolNode(all_tools))
 
 # 3. 定义入口 (Entry Point)
 # 一旦任务开始，第一个干活的是 "researcher"
