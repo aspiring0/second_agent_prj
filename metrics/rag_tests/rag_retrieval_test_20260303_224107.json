@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-03-03T22:41:07.073679",
+  "project_id": "rag_test_kb",
+  "test_type": "retrieval_only",
+  "summary": {
+    "avg_precision": 1.16,
+    "avg_recall": 0.784,
+    "avg_mrr": 0.8933333333333333,
+    "avg_latency_ms": 1781.7005157470703,
+    "total_tests": 25,
+    "by_category": {
+      "factual": {
+        "count": 5,
+        "recall_sum": 4.35
+      },
+      "technical": {
+        "count": 8,
+        "recall_sum": 7.05
+      },
+      "architecture": {
+        "count": 5,
+        "recall_sum": 3.8
+      },
+      "usage": {
+        "count": 4,
+        "recall_sum": 2.65
+      },
+      "troubleshooting": {
+        "count": 3,
+        "recall_sum": 1.75
+      }
+    }
+  }
+}

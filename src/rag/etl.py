@@ -2,7 +2,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
@@ -55,6 +55,114 @@ MARKDOWN_SEPARATORS = [
     "，",      # 中文逗号
     " ",       # 空格
     ""         # 最后按字符切分
+]
+
+# 针对 Python 代码的分隔符（优化版 - 保持类和函数完整）
+PYTHON_SEPARATORS = [
+    "\n\nclass ",     # 类定义前（双换行）
+    "\n\ndef ",       # 函数定义前（双换行）
+    "\n\nasync def ", # 异步函数定义前
+    "\n    def ",     # 类方法
+    "\nclass ",       # 类定义前（单换行）
+    "\ndef ",         # 函数定义前（单换行）
+    "\n\n",           # 空行
+    "\n",             # 换行
+    ";",              # 分号
+    " ",              # 空格
+    ""                # 字符
+]
+
+# 针对 Java 代码的分隔符
+JAVA_SEPARATORS = [
+    "\n\npublic class ",   # 公共类
+    "\n\nclass ",          # 普通类
+    "\n\npublic ",         # 公共方法
+    "\n\nprivate ",        # 私有方法
+    "\n\nprotected ",      # 保护方法
+    "\n    public ",       # 类内公共方法
+    "\n    private ",      # 类内私有方法
+    "\n    protected ",    # 类内保护方法
+    "\npublic ",           # 公共声明
+    "\nprivate ",          # 私有声明
+    "\n\n",                # 空行
+    "\n",                  # 换行
+    ";",                   # 分号
+    " ",                   # 空格
+    ""                     # 字符
+]
+
+# 针对 JavaScript/TypeScript 代码的分隔符
+JS_SEPARATORS = [
+    "\n\nfunction ",       # 函数
+    "\n\nconst ",          # const声明
+    "\n\nlet ",            # let声明
+    "\n\nclass ",          # 类
+    "\n\nexport ",         # 导出
+    "\n    function ",     # 方法
+    "\nfunction ",         # 函数（单换行）
+    "\nconst ",            # const
+    "\nlet ",              # let
+    "\n\n",                # 空行
+    "\n",                  # 换行
+    ";",                   # 分号
+    " ",                   # 空格
+    ""                     # 字符
+]
+
+# 针对 Go 代码的分隔符
+GO_SEPARATORS = [
+    "\n\nfunc ",           # 函数
+    "\n\nfunc (",          # 方法（带接收器）
+    "\n\ntype ",           # 类型定义
+    "\n\nstruct ",         # 结构体
+    "\n\ninterface ",      # 接口
+    "\nfunc ",             # 函数（单换行）
+    "\ntype ",             # 类型
+    "\n\n",                # 空行
+    "\n",                  # 换行
+    "{",                   # 左花括号
+    "}",                   # 右花括号
+    " ",                   # 空格
+    ""                     # 字符
+]
+
+# 针对 C 代码的分隔符
+C_SEPARATORS = [
+    "\n\ntypedef ",        # 类型定义
+    "\n\nstruct ",         # 结构体
+    "\n\nenum ",           # 枚举
+    "\n\nint ",            # 整型函数
+    "\n\nvoid ",           # 无返回值函数
+    "\n\nchar ",           # 字符函数
+    "\n\nstatic ",         # 静态函数
+    "\nint ",              # 整型声明
+    "\nvoid ",             # void声明
+    "\n\n",                # 空行
+    "\n",                  # 换行
+    "{",                   # 左花括号
+    "}",                   # 右花括号
+    ";",                   # 分号
+    " ",                   # 空格
+    ""                     # 字符
+]
+
+# 针对 Rust 代码的分隔符
+RUST_SEPARATORS = [
+    "\n\nfn ",             # 函数
+    "\n\npub fn ",         # 公共函数
+    "\n\nasync fn ",       # 异步函数
+    "\n\nstruct ",         # 结构体
+    "\n\nenum ",           # 枚举
+    "\n\nimpl ",           # 实现
+    "\n\ntrait ",          # trait
+    "\nfn ",               # 函数（单换行）
+    "\nstruct ",           # 结构体
+    "\n\n",                # 空行
+    "\n",                  # 换行
+    "{",                   # 左花括号
+    "}",                   # 右花括号
+    " ",                   # 空格
+    ""                     # 字符
 ]
 
 
@@ -150,7 +258,7 @@ class ContentProcessor:
         """
         智能切分文档：
         - 根据文档类型选择不同的分隔符策略
-        - 非代码文件使用优化的中文分隔符
+        - 支持中文文档、Markdown、多种代码语言
         """
         if not documents:
             return []
@@ -164,10 +272,19 @@ class ContentProcessor:
             # 根据文件类型选择分隔符
             if file_type == ".md":
                 separators = MARKDOWN_SEPARATORS
-            elif file_type in [".py", ".js", ".java", ".c", ".cpp", ".ts", ".go", ".rs"]:
-                # 代码文件保持原有逻辑（暂不优化）
-                separators = ["\n\nclass ", "\n\ndef ", "\n\nclass ", "\n\ndef ",
-                             "\nclass ", "\ndef ", "\n\n", "\n", " ", ""]
+            elif file_type == ".py":
+                separators = PYTHON_SEPARATORS
+            elif file_type == ".java":
+                separators = JAVA_SEPARATORS
+            elif file_type in [".js", ".ts"]:
+                separators = JS_SEPARATORS
+            elif file_type in [".c", ".cpp", ".go", ".rs"]:
+                # C/C++/Go/Rust 使用类似的代码分隔符
+                separators = [
+                    "\n\nfunc ", "\n\nfunc (", "\n\nfn ", "\n\nstruct ",
+                    "\nfunc ", "\nfn ", "\nstruct ",
+                    "\n\n", "\n", ";", " ", ""
+                ]
             else:
                 # txt、pdf、docx 等普通文档使用中文分隔符
                 separators = CHINESE_SEPARATORS
@@ -187,3 +304,20 @@ class ContentProcessor:
         
         logger.info(f"✅ 切分完成: {len(documents)} 个文档 → {len(all_chunks)} 个片段")
         return all_chunks
+    
+    def get_supported_file_types(self) -> Dict[str, str]:
+        """返回支持的文件类型及描述"""
+        return {
+            ".txt": "纯文本文件（支持UTF-8/GBK编码）",
+            ".md": "Markdown文档",
+            ".pdf": "PDF文档",
+            ".docx": "Word文档",
+            ".py": "Python代码",
+            ".js": "JavaScript代码",
+            ".ts": "TypeScript代码",
+            ".java": "Java代码",
+            ".c": "C语言代码",
+            ".cpp": "C++代码",
+            ".go": "Go语言代码",
+            ".rs": "Rust代码"
+        }

@@ -1,0 +1,288 @@
+{
+  "generated_at": "2026-03-03T22:18:13.713663",
+  "total_execution_time_seconds": 3.51,
+  "results": {
+    "dataset_stats": {
+      "total_datasets": 4,
+      "total_test_cases": 22,
+      "by_dataset": {
+        "RAG训练集": {
+          "count": 7,
+          "categories": {
+            "factual": 3,
+            "technical": 2,
+            "reasoning": 2
+          },
+          "difficulties": {
+            "easy": 2,
+            "medium": 4,
+            "hard": 1
+          }
+        },
+        "RAG验证集": {
+          "count": 5,
+          "categories": {
+            "factual": 1,
+            "technical": 2,
+            "reasoning": 2
+          },
+          "difficulties": {
+            "easy": 1,
+            "medium": 2,
+            "hard": 2
+          }
+        },
+        "RAG测试集": {
+          "count": 5,
+          "categories": {
+            "technical": 3,
+            "factual": 1,
+            "reasoning": 1
+          },
+          "difficulties": {
+            "medium": 3,
+            "hard": 2
+          }
+        },
+        "边缘情况测试集": {
+          "count": 5,
+          "categories": {
+            "edge_case": 5
+          },
+          "difficulties": {
+            "easy": 2,
+            "medium": 3
+          }
+        }
+      }
+    },
+    "performance": {
+      "tracker_stats": {
+        "timestamp": "2026-03-03T22:18:10.208084",
+        "latency_stats": {},
+        "latency_percentiles": {},
+        "throughput": {
+          "window_seconds": 60,
+          "total_requests": 0,
+          "successful_requests": 0,
+          "failed_requests": 0,
+          "requests_per_second": 0.0,
+          "success_rate": 0
+        },
+        "concurrent": {
+          "current_concurrent": 0,
+          "max_concurrent": 0
+        }
+      },
+      "collector_stats": {}
+    },
+    "quality": {
+      "retrieval": {
+        "total_evaluations": 17,
+        "avg_precision": 1.0,
+        "avg_recall": 0.5588235294117647,
+        "avg_mrr": 1.0,
+        "avg_ndcg": 1.0
+      },
+      "generation": {
+        "total_evaluations": 17,
+        "avg_faithfulness": 0.0,
+        "avg_relevance": 0.8280466265760383,
+        "avg_completeness": 1.0,
+        "hallucination_rate": 0.0
+      },
+      "test_queries_count": 17,
+      "detailed_results": {
+        "retrieval_samples": [
+          {
+            "query": "Python是什么？",
+            "precision": 1.0,
+            "recall": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          },
+          {
+            "query": "什么是机器学习？",
+            "precision": 1.0,
+            "recall": 0.5,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          },
+          {
+            "query": "向量数据库的作用是什么？",
+            "precision": 1.0,
+            "recall": 0.5,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          },
+          {
+            "query": "如何实现文本切分？",
+            "precision": 1.0,
+            "recall": 0.5,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          },
+          {
+            "query": "RAG系统的工作流程是什么？",
+            "precision": 1.0,
+            "recall": 0.5,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        ],
+        "generation_samples": [
+          {
+            "query": "Python是什么？",
+            "faithfulness": 0.0,
+            "relevance": 0.7,
+            "completeness": 1.0,
+            "hallucination": false
+          },
+          {
+            "query": "什么是机器学习？",
+            "faithfulness": 0.0,
+            "relevance": 0.925,
+            "completeness": 1.0,
+            "hallucination": false
+          },
+          {
+            "query": "向量数据库的作用是什么？",
+            "faithfulness": 0.0,
+            "relevance": 0.8833333333333333,
+            "completeness": 1.0,
+            "hallucination": false
+          },
+          {
+            "query": "如何实现文本切分？",
+            "faithfulness": 0.0,
+            "relevance": 0.9666666666666666,
+            "completeness": 1.0,
+            "hallucination": false
+          },
+          {
+            "query": "RAG系统的工作流程是什么？",
+            "faithfulness": 0.0,
+            "relevance": 0.9666666666666666,
+            "completeness": 1.0,
+            "hallucination": false
+          }
+        ]
+      }
+    },
+    "load_test": {
+      "low_load": {
+        "config": {
+          "concurrent_users": 5,
+          "total_requests": 20,
+          "ramp_up_seconds": 2.0,
+          "think_time_seconds": 0.5,
+          "timeout_seconds": 30.0
+        },
+        "results": {
+          "total_duration_seconds": 3.41,
+          "total_requests": 20,
+          "successful_requests": 20,
+          "failed_requests": 0,
+          "success_rate": 100.0,
+          "avg_latency_ms": 100.44,
+          "min_latency_ms": 100.15,
+          "max_latency_ms": 101.32,
+          "p50_latency_ms": 100.38,
+          "p95_latency_ms": 101.32,
+          "p99_latency_ms": 101.32,
+          "requests_per_second": 5.87
+        },
+        "errors": []
+      }
+    },
+    "benchmark": {
+      "results": [
+        {
+          "config": {
+            "name": "baseline",
+            "description": "基线配置",
+            "config": {
+              "type": "baseline"
+            },
+            "tags": []
+          },
+          "metrics": {
+            "latency_ms": 50.9953498840332,
+            "throughput": 19.60963111879938
+          },
+          "execution_time_seconds": 0.051,
+          "timestamp": "2026-03-03T22:18:13.682942"
+        },
+        {
+          "config": {
+            "name": "baseline",
+            "description": "基线配置",
+            "config": {
+              "type": "baseline"
+            },
+            "tags": []
+          },
+          "metrics": {
+            "latency_ms": 50.9953498840332,
+            "throughput": 19.60963111879938
+          },
+          "execution_time_seconds": 0.051,
+          "timestamp": "2026-03-03T22:18:13.682942"
+        },
+        {
+          "config": {
+            "name": "optimized",
+            "description": "优化配置",
+            "config": {
+              "type": "optimized"
+            },
+            "tags": []
+          },
+          "metrics": {
+            "latency_ms": 30.720949172973633,
+            "throughput": 32.55107758453431
+          },
+          "execution_time_seconds": 0.031,
+          "timestamp": "2026-03-03T22:18:13.713663"
+        },
+        {
+          "config": {
+            "name": "optimized",
+            "description": "优化配置",
+            "config": {
+              "type": "optimized"
+            },
+            "tags": []
+          },
+          "metrics": {
+            "latency_ms": 30.720949172973633,
+            "throughput": 32.55107758453431
+          },
+          "execution_time_seconds": 0.031,
+          "timestamp": "2026-03-03T22:18:13.713663"
+        }
+      ],
+      "comparison": {
+        "winner": "optimized",
+        "summary": "基准线: baseline\n指标: {\"latency_ms\": 50.9953498840332, \"throughput\": 19.60963111879938}\n\n对比: optimized\n  整体改进: 52.9%\n  ✅ latency_ms: 30.72 vs 51.00 (-39.8%)\n  ✅ throughput: 32.55 vs 19.61 (+66.0%)\n对比: optimized\n  整体改进: 52.9%\n  ✅ latency_ms: 30.72 vs 51.00 (-39.8%)\n  ✅ throughput: 32.55 vs 19.61 (+66.0%)"
+      }
+    }
+  },
+  "summary": {
+    "performance": {
+      "total_metric_types": 0
+    },
+    "quality": {
+      "avg_precision": 1.0,
+      "avg_recall": 0.5588235294117647,
+      "avg_faithfulness": 0.0
+    },
+    "load_test": {
+      "rps": 5.87,
+      "avg_latency_ms": 100.44
+    },
+    "benchmark": {
+      "winner": "optimized"
+    }
+  }
+}

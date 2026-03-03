@@ -155,11 +155,180 @@ python main.py
 在 `config/settings.py` 中可调整：
 
 ```python
+# RAG 参数
 CHUNK_SIZE = 800        # 切片大小
 CHUNK_OVERLAP = 100     # 切片重叠
+RETRIEVAL_TOP_K = 3     # 检索返回文档数
+
+# 默认模型配置（可在Web界面动态切换）
 EMBEDDING_MODEL = "text-embedding-3-small"  # 向量化模型
 CHAT_MODEL = "gpt-3.5-turbo"               # 对话模型
+AGENT_MODEL = "gpt-4o-mini"                # Agent模型
+
+# 模型切换功能开关
+ENABLE_MODEL_SWITCHING = True  # 是否启用Web界面模型切换
 ```
+
+### 环境变量配置
+
+在 `.env` 文件中配置各平台 API Key：
+
+```env
+# OpenAI (必需)
+OPENAI_API_KEY=sk-xxxxxxxx
+OPENAI_API_BASE=https://api.openai.com/v1
+
+# DeepSeek (可选 - 国产替代，性价比高)
+DEEPSEEK_API_KEY=sk-xxxxxxxx
+
+# 智谱AI (可选 - GLM系列)
+ZHIPU_API_KEY=xxxxxxxx
+
+# Moonshot (可选 - 月之暗面)
+MOONSHOT_API_KEY=sk-xxxxxxxx
+
+# 模型配置（可选，覆盖默认值）
+CHAT_MODEL=gpt-4o-mini
+EMBEDDING_MODEL=text-embedding-3-small
+```
+
+## 🤖 多模型支持
+
+系统支持多个大语言模型提供商，可在 Web 界面动态切换：
+
+### 支持的对话模型
+
+| 提供商 | 模型 | 特点 |
+|--------|------|------|
+| **OpenAI** | gpt-4o | 最新旗舰，性能强大 |
+| **OpenAI** | gpt-4o-mini | 轻量版，性价比高 |
+| **OpenAI** | gpt-4-turbo | 支持128K上下文 |
+| **OpenAI** | gpt-3.5-turbo | 快速经济 |
+| **DeepSeek** | deepseek-chat | 中文能力强，性价比高 |
+| **DeepSeek** | deepseek-reasoner | 推理能力强 |
+| **智谱AI** | glm-4 | 中文理解强 |
+| **智谱AI** | glm-4-flash | 快速，免费额度大 |
+| **Moonshot** | moonshot-v1-8k | 长文本能力突出 |
+| **Moonshot** | moonshot-v1-32k | 超长文本支持 |
+
+### 支持的 Embedding 模型
+
+| 提供商 | 模型 | 维度 | 特点 |
+|--------|------|------|------|
+| **OpenAI** | text-embedding-3-small | 1536 | 性价比高 |
+| **OpenAI** | text-embedding-3-large | 3072 | 效果最好 |
+| **OpenAI** | text-embedding-ada-002 | 1536 | 经典稳定 |
+| **智谱AI** | embedding-2 | 1024 | 中文优化 |
+
+### 代码中使用
+
+```python
+from src.utils.model_manager import model_manager
+
+# 获取当前对话模型
+llm = model_manager.get_chat_model()
+
+# 指定模型获取
+llm = model_manager.get_chat_model("deepseek-chat")
+
+# 获取 Embedding 模型
+embeddings = model_manager.get_embedding_model()
+
+# 切换模型
+model_manager.set_current_chat_model("gpt-4o")
+model_manager.set_current_embedding_model("text-embedding-3-large")
+
+# 查看模型状态
+status = model_manager.get_model_status()
+print(status)
+```
+
+### 注意事项
+
+⚠️ **重要**：切换 Embedding 模型后，**需要重新入库文档**，因为不同模型的向量维度和语义空间不同。
+
+## 🐳 Docker 部署
+
+### 快速部署到服务器
+
+**1. 准备服务器**
+- 一台有公网 IP 的云服务器（阿里云、腾讯云等）
+- 安装 Docker 和 Docker Compose
+- 开放 8501 端口
+
+**2. 上传项目到服务器**
+```bash
+# 方式一：使用 scp
+scp -r ./* user@your-server:/home/user/rag-agent/
+
+# 方式二：使用 git clone
+git clone https://github.com/aspiring0/second_agent_prj.git
+cd second_agent_prj
+```
+
+**3. 配置环境变量**
+```bash
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑 .env 文件，填入你的 API Key
+nano .env
+```
+
+**4. 启动服务**
+```bash
+# 构建并启动（后台运行）
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
+**5. 访问应用**
+```
+http://你的服务器公网IP:8501
+```
+
+### Docker 常用命令
+
+```bash
+# 重新构建镜像
+docker-compose build --no-cache
+
+# 重启服务
+docker-compose restart
+
+# 查看容器状态
+docker-compose ps
+
+# 进入容器调试
+docker exec -it rag-agent bash
+
+# 查看实时日志
+docker-compose logs -f rag-agent
+```
+
+### 数据持久化
+
+以下目录会挂载到宿主机，数据不会丢失：
+- `./data` - 向量数据库和上传的文件
+- `./logs` - 运行日志
+- `./metrics` - 指标数据
+
+### 更新部署
+
+```bash
+# 拉取最新代码
+git pull
+
+# 重新构建并启动
+docker-compose up -d --build
+```
+
+---
 
 ## 常见问题
 
@@ -193,6 +362,56 @@ CHAT_MODEL = "gpt-3.5-turbo"               # 对话模型
 **添加新节点**：在 `src/agent/nodes.py` 实现节点函数，在 `graph.py` 中注册并定义流转逻辑。
 
 **切换模型**：修改 `config/settings.py` 中的 `CHAT_MODEL` 或 `EMBEDDING_MODEL`。
+
+## 📊 指标与测试系统
+
+本项目包含完整的指标收集和测试系统，支持性能监控、质量评估、A/B测试和高并发压力测试。
+
+### 快速运行测试
+
+```bash
+# 运行综合指标测试
+python tests/run_all_metrics.py
+
+# 运行负载测试（需要配置查询函数）
+python -c "from tests import run_quick_test; run_quick_test()"
+```
+
+### 指标类型
+
+| 类型 | 指标 | 描述 |
+|------|------|------|
+| **性能** | latency, RPS, P50/P95/P99 | 响应延迟、吞吐量、百分位延迟 |
+| **质量** | precision, recall, MRR, NDCG | 检索精确率、召回率、排名指标 |
+| **生成** | faithfulness, relevance, hallucination | 忠实度、相关性、幻觉检测 |
+| **负载** | concurrent_users, success_rate | 并发用户数、成功率 |
+
+### 在代码中使用
+
+```python
+from src.metrics import metrics_collector, performance_tracker
+
+# 追踪操作延迟
+with performance_tracker.track_latency("my_operation"):
+    # 执行操作
+    result = do_something()
+
+# 记录自定义指标
+metrics_collector.record(
+    metric_type="custom",
+    metric_name="my_metric",
+    value=123.45,
+    unit="ms"
+)
+```
+
+### 测试报告
+
+测试报告自动保存到 `metrics/reports/` 目录，包括：
+- `comprehensive_report_YYYYMMDD_HHMMSS.json` - 详细测试报告
+- `latest_report.json` - 最新测试报告
+
+📄 **详细指标文档**：[docs/METRICS_GUIDE.md](docs/METRICS_GUIDE.md)
 
 ---
 

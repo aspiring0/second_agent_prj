@@ -191,7 +191,8 @@ Enterprise_RAG_Agent/
 │   └── utils/                       # 通用工具
 │       ├── __init__.py
 │       ├── db.py                    # SQLite 数据库操作
-│       └── logger.py                # 统一日志配置
+│       ├── logger.py                # 统一日志配置
+│       └── model_manager.py         # 多模型管理器 (动态切换模型)
 │
 ├── web_app.py                       # Streamlit Web应用入口
 ├── main.py                          # 命令行交互入口
@@ -853,6 +854,106 @@ def setup_logger(name: str) -> logging.Logger:
 **日志格式**：
 ```
 2024-01-15 10:30:45,123 - RAG_ETL - INFO - 📄 正在处理: test.pdf
+```
+
+#### 4.5.3 模型管理器 (`model_manager.py`)
+
+**职责**：统一管理多个大语言模型和Embedding模型，支持动态切换。
+
+**核心类**：`ModelManager`
+
+```python
+from src.utils.model_manager import model_manager
+
+# 获取对话模型
+llm = model_manager.get_chat_model()
+
+# 获取指定模型
+llm = model_manager.get_chat_model("deepseek-chat")
+
+# 获取 Embedding 模型
+embeddings = model_manager.get_embedding_model()
+
+# 切换模型
+model_manager.set_current_chat_model("gpt-4o")
+model_manager.set_current_embedding_model("text-embedding-3-large")
+```
+
+**支持的模型提供商**：
+
+| 提供商 | 对话模型 | Embedding模型 |
+|--------|----------|---------------|
+| OpenAI | gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo | text-embedding-3-small, text-embedding-3-large |
+| DeepSeek | deepseek-chat, deepseek-reasoner | - |
+| 智谱AI | glm-4, glm-4-flash | embedding-2 |
+| Moonshot | moonshot-v1-8k, moonshot-v1-32k | - |
+
+**配置结构**：
+
+```python
+@dataclass
+class ChatModelConfig:
+    id: str                    # 模型ID（唯一标识）
+    name: str                  # 显示名称
+    model_name: str            # 实际调用的模型名
+    provider: ModelProvider    # 提供商
+    base_url: Optional[str]    # API基础URL
+    api_key_env: str           # API Key环境变量名
+    max_tokens: int            # 最大输出token
+    temperature: float         # 默认温度
+    description: str           # 模型描述
+    supports_tools: bool       # 是否支持工具调用
+    supports_vision: bool      # 是否支持视觉
+```
+
+**环境变量配置**：
+
+```env
+# OpenAI
+OPENAI_API_KEY=sk-xxxxxxxx
+OPENAI_API_BASE=https://api.openai.com/v1
+
+# DeepSeek (国产替代)
+DEEPSEEK_API_KEY=sk-xxxxxxxx
+
+# 智谱AI
+ZHIPU_API_KEY=xxxxxxxx
+
+# Moonshot
+MOONSHOT_API_KEY=sk-xxxxxxxx
+```
+
+**设计特点**：
+
+1. **单例模式**：全局唯一的模型管理器实例
+2. **延迟加载**：模型实例按需创建，减少资源占用
+3. **缓存机制**：已创建的模型实例会被缓存，避免重复初始化
+4. **API Key 检测**：切换模型前自动检测对应的 API Key 是否配置
+
+**使用示例**：
+
+```python
+# 在代码中使用模型管理器
+from src.utils.model_manager import model_manager
+
+# 获取当前对话模型（用于Agent节点）
+llm = model_manager.get_chat_model(temperature=0.1)
+
+# 获取当前Embedding模型（用于向量化）
+embeddings = model_manager.get_embedding_model()
+
+# 查看模型状态
+status = model_manager.get_model_status()
+# {
+#     "current_chat_model": {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "openai"},
+#     "current_embedding_model": {"id": "text-embedding-3-small", "name": "OpenAI Embedding v3 Small", "dimension": 1536},
+#     "available_chat_models": 10,
+#     "available_embedding_models": 4
+# }
+
+# 检查模型是否可用
+available, reason = model_manager.check_model_available("deepseek-chat")
+# (True, "可用") 或 (False, "缺少API Key: DEEPSEEK_API_KEY")
 ```
 
 ---

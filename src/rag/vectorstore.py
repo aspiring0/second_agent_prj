@@ -1,8 +1,8 @@
 # src/rag/vectorstore.py
 from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
 from config.settings import settings
 from src.utils.logger import setup_logger
+from src.utils.model_manager import model_manager
 
 logger = setup_logger("RAG_Database")
 
@@ -11,11 +11,8 @@ DEFAULT_PROJECT_ID = "default"
 class VectorDBManager:
     def __init__(self):
         self.persist_dir = str(settings.DB_DIR)
-        self.embedding_fn = OpenAIEmbeddings(
-            model=settings.EMBEDDING_MODEL,
-            openai_api_key=settings.OPENAI_API_KEY,
-            openai_api_base=settings.OPENAI_BASE_URL
-        )
+        # 使用模型管理器获取Embedding模型
+        self.embedding_fn = model_manager.get_embedding_model()
 
     def create_vector_db(self, chunks, project_id: str = DEFAULT_PROJECT_ID):
         if not chunks:

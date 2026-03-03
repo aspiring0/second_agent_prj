@@ -1,0 +1,351 @@
+{
+  "ingestion": {
+    "total_chunks": 49,
+    "files_processed": 6
+  },
+  "summary": {
+    "total_questions": 19,
+    "top1_accuracy": 0.6842105263157895,
+    "top3_accuracy": 0.8421052631578947,
+    "top1_hits": 13,
+    "top3_hits": 16,
+    "by_file_type": {
+      "py": {
+        "total": 4,
+        "top1": 3,
+        "top3": 4
+      },
+      "java": {
+        "total": 3,
+        "top1": 1,
+        "top3": 3
+      },
+      "c": {
+        "total": 3,
+        "top1": 3,
+        "top3": 3
+      },
+      "js": {
+        "total": 3,
+        "top1": 3,
+        "top3": 3
+      },
+      "go": {
+        "total": 3,
+        "top1": 0,
+        "top3": 0
+      },
+      "rs": {
+        "total": 3,
+        "top1": 3,
+        "top3": 3
+      }
+    }
+  },
+  "retrieval_details": [
+    {
+      "question": "Python中VectorStore类是如何实现的？",
+      "expected": "test.py",
+      "retrieved": [
+        "test.py",
+        "test.js",
+        "Test.java"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.7087375521659851,
+        0.7578451037406921,
+        0.7593223452568054
+      ]
+    },
+    {
+      "question": "如何在Python中添加文档到向量存储？",
+      "expected": "test.py",
+      "retrieved": [
+        "test.c",
+        "test.py",
+        "test.rs"
+      ],
+      "top1_hit": false,
+      "top3_hit": true,
+      "scores": [
+        0.7831029891967773,
+        0.8055643439292908,
+        0.8497288823127747
+      ]
+    },
+    {
+      "question": "Python的RAGPipeline类有什么功能？",
+      "expected": "test.py",
+      "retrieved": [
+        "test.py",
+        "test.rs",
+        "test.js"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.7977862358093262,
+        0.8352303504943848,
+        0.9439823627471924
+      ]
+    },
+    {
+      "question": "Python的ETLProcessor如何切分文档？",
+      "expected": "test.py",
+      "retrieved": [
+        "test.py",
+        "test.rs",
+        "test.rs"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.7196525931358337,
+        0.7327130436897278,
+        0.8870722651481628
+      ]
+    },
+    {
+      "question": "Java中RAGService类的query方法怎么实现？",
+      "expected": "Test.java",
+      "retrieved": [
+        "Test.java",
+        "test.c",
+        "Test.java"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.6851844191551208,
+        0.7980791330337524,
+        0.9734426736831665
+      ]
+    },
+    {
+      "question": "Java的VectorStore如何搜索文档？",
+      "expected": "Test.java",
+      "retrieved": [
+        "test.c",
+        "Test.java",
+        "test.js"
+      ],
+      "top1_hit": false,
+      "top3_hit": true,
+      "scores": [
+        0.6994979977607727,
+        0.7162596583366394,
+        0.7645022869110107
+      ]
+    },
+    {
+      "question": "Java中如何构建提示词？",
+      "expected": "Test.java",
+      "retrieved": [
+        "test.c",
+        "test.js",
+        "Test.java"
+      ],
+      "top1_hit": false,
+      "top3_hit": true,
+      "scores": [
+        1.0821106433868408,
+        1.1182069778442383,
+        1.1705970764160156
+      ]
+    },
+    {
+      "question": "C语言中如何创建向量存储？",
+      "expected": "test.c",
+      "retrieved": [
+        "test.c",
+        "test.py",
+        "test.rs"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.8227729797363281,
+        0.8417732119560242,
+        0.8827093243598938
+      ]
+    },
+    {
+      "question": "C语言中search_similar函数的实现",
+      "expected": "test.c",
+      "retrieved": [
+        "test.c",
+        "test.rs",
+        "test.js"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.964515209197998,
+        0.982154130935669,
+        1.0046738386154175
+      ]
+    },
+    {
+      "question": "C语言中如何生成文本向量？",
+      "expected": "test.c",
+      "retrieved": [
+        "test.c",
+        "test.rs",
+        "test.c"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.7193405628204346,
+        0.9276556968688965,
+        1.0486485958099365
+      ]
+    },
+    {
+      "question": "JavaScript中VectorStore类的构造函数",
+      "expected": "test.js",
+      "retrieved": [
+        "test.js",
+        "test.c",
+        "Test.java"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.6677804589271545,
+        0.7334409952163696,
+        0.7763597965240479
+      ]
+    },
+    {
+      "question": "JS中如何计算余弦相似度？",
+      "expected": "test.js",
+      "retrieved": [
+        "test.js",
+        "test.js",
+        "test.c"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.6057048439979553,
+        1.1310511827468872,
+        1.1997506618499756
+      ]
+    },
+    {
+      "question": "JavaScript的RAGPipeline如何执行查询？",
+      "expected": "test.js",
+      "retrieved": [
+        "test.js",
+        "test.rs",
+        "test.c"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.6608654856681824,
+        0.7412474155426025,
+        0.8410511612892151
+      ]
+    },
+    {
+      "question": "Go语言中VectorStore的AddDocuments方法",
+      "expected": "test.go",
+      "retrieved": [
+        "test.c",
+        "Test.java",
+        "test.js"
+      ],
+      "top1_hit": false,
+      "top3_hit": false,
+      "scores": [
+        0.5036110281944275,
+        0.548678457736969,
+        0.5504668354988098
+      ]
+    },
+    {
+      "question": "Go语言如何实现RAG查询？",
+      "expected": "test.go",
+      "retrieved": [
+        "test.c",
+        "Test.java",
+        "test.c"
+      ],
+      "top1_hit": false,
+      "top3_hit": false,
+      "scores": [
+        0.7305117845535278,
+        0.7915418744087219,
+        0.826694667339325
+      ]
+    },
+    {
+      "question": "Go语言的ETLProcessor如何切分文档？",
+      "expected": "test.go",
+      "retrieved": [
+        "test.rs",
+        "test.js",
+        "test.py"
+      ],
+      "top1_hit": false,
+      "top3_hit": false,
+      "scores": [
+        0.7404820322990417,
+        0.7656124830245972,
+        0.8110759258270264
+      ]
+    },
+    {
+      "question": "Rust中VectorStore如何搜索？",
+      "expected": "test.rs",
+      "retrieved": [
+        "test.rs",
+        "test.rs",
+        "Test.java"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.8647739887237549,
+        0.8823807239532471,
+        0.886056661605835
+      ]
+    },
+    {
+      "question": "Rust的RAGPipeline如何构建提示词？",
+      "expected": "test.rs",
+      "retrieved": [
+        "test.rs",
+        "test.js",
+        "test.py"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.7432225942611694,
+        0.8080816864967346,
+        0.8856649994850159
+      ]
+    },
+    {
+      "question": "Rust中Document结构体的定义",
+      "expected": "test.rs",
+      "retrieved": [
+        "test.rs",
+        "test.c",
+        "test.js"
+      ],
+      "top1_hit": true,
+      "top3_hit": true,
+      "scores": [
+        0.8966686725616455,
+        1.0380595922470093,
+        1.0463731288909912
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  rag-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-agent
+    ports:
+      - "8501:8501"
+    volumes:
+      # 持久化数据目录
+      - ./data:/app/data
+      # 持久化日志
+      - ./logs:/app/logs
+      # 持久化指标数据
+      - ./metrics:/app/metrics
+    environment:
+      # API Keys - 从 .env 文件读取
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-https://api.openai.com/v1}
+      # 可选：其他 API Keys
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY:-}
+      - MOONSHOT_API_KEY=${MOONSHOT_API_KEY:-}
+      # 模型配置
+      - CHAT_MODEL=${CHAT_MODEL:-gpt-3.5-turbo}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-3-small}
+      - AGENT_MODEL=${AGENT_MODEL:-gpt-4o-mini}
+      # RAG 参数
+      - CHUNK_SIZE=${CHUNK_SIZE:-800}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
+      - RETRIEVAL_TOP_K=${RETRIEVAL_TOP_K:-3}
+      # 功能开关
+      - ENABLE_MODEL_SWITCHING=${ENABLE_MODEL_SWITCHING:-true}
+    restart: unless-stopped
+    # 资源限制（可选，根据需要调整）
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+
+# 数据卷定义（可选：使用命名卷代替绑定挂载）
+# volumes:
+#   data:
+#   logs:
+#   metrics:

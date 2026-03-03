@@ -1,0 +1,18 @@
+{
+  "test": {
+    "file_type": "Rust",
+    "file_name": "test.rs",
+    "chunk_count": 10,
+    "avg_chunk_size": 579.9,
+    "quality_score": 1,
+    "issues": []
+  },
+  "Test": {
+    "file_type": "Java",
+    "file_name": "Test.java",
+    "chunk_count": 7,
+    "avg_chunk_size": 467.1,
+    "quality_score": 1,
+    "issues": []
+  }
+}

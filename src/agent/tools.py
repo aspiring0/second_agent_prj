@@ -43,15 +43,30 @@ def get_chroma_db():
 @tool
 def general_qa(question: str, config: RunnableConfig) -> str:
     """
-    通用问答工具。用于回答常识性问题、编程问题、概念解释等不需要知识库的问题。
-    当用户问题与知识库无关时使用此工具，如：
-    - 编程问题："Python如何读取文件"
-    - 概念解释："什么是机器学习"
-    - 一般建议："如何提高编程能力"
-    - 数学计算、逻辑推理等
+    通用问答工具 - 处理不需要知识库的问题
+    
+    【核心功能】
+    使用大模型的通用知识回答各类问题，不依赖知识库文档。
+    
+    【适用场景】
+    - 编程问题：代码语法、框架使用、调试技巧
+    - 概念解释：技术概念、术语解释、原理说明
+    - 一般建议：学习路径、最佳实践、方案选择
+    - 逻辑推理：数学问题、逻辑分析、因果关系
+    - 创意生成：文案撰写、头脑风暴、方案设计
+    
+    【不适用场景】
+    - 需要查询用户上传的文档 → 使用 ask_knowledge_base
+    - 需要查找特定文件 → 使用 search_by_filename
+    - 涉及企业内部知识 → 使用知识库相关工具
+    
+    【使用示例】
+    - 用户问："Python如何读取JSON文件？" → 调用此工具
+    - 用户问："什么是RAG技术？" → 调用此工具
+    - 用户问："这个项目的架构是什么？" → 使用 ask_knowledge_base
     
     参数:
-        question: 用户的问题
+        question: 用户的完整问题，保持原意传递
     """
     try:
         logger.info(f"🔧 通用问答: {question}")
@@ -170,9 +185,30 @@ def calculate_expression(expression: str, config: RunnableConfig = None) -> str:
 @tool
 def list_knowledge_base_files(config: RunnableConfig) -> str:
     """
-    列出知识库中所有的文件名和文件类型。
-    当用户问"有哪些文件"、"有什么PDF"、"知识库里有什么"时使用此工具。
-    返回文件列表，帮助用户了解知识库内容。
+    知识库文件列表工具 - 查看知识库中有哪些文件
+    
+    【核心功能】
+    列出当前知识库中所有已上传的文件，包括文件名、类型和片段数量。
+    
+    【适用场景】
+    - 用户想了解知识库内容："知识库里有什么？"
+    - 用户不确定有哪些文件："有哪些文档？"
+    - 用户想确认文件是否上传成功："我的PDF上传了吗？"
+    - 作为搜索前的探索步骤
+    
+    【不适用场景】
+    - 用户有具体问题需要回答 → 使用 ask_knowledge_base
+    - 用户要查找特定文件内容 → 使用 search_by_filename
+    
+    【使用示例】
+    - "知识库里有什么？" → 直接调用
+    - "我上传了哪些文件？" → 直接调用
+    - "有没有PDF文档？" → 直接调用（会显示文件类型）
+    
+    【返回信息】
+    - 文件名列表
+    - 每个文件的类型（PDF、TXT、PY等）
+    - 每个文件的切片数量
     """
     cfg = config.get("configurable", {}) or {}
     project_id = cfg.get("project_id", "default")
@@ -212,12 +248,39 @@ def list_knowledge_base_files(config: RunnableConfig) -> str:
 @tool
 def search_by_filename(filename: str, config: RunnableConfig) -> str:
     """
-    按文件名搜索知识库内容。
-    当用户提到具体文件名（如"PDF文件"、"那个py文件"、"xxx.pdf"）时使用此工具。
-    会返回该文件的所有相关内容片段。
+    文件名搜索工具 - 按文件名或类型搜索知识库内容
+    
+    【核心功能】
+    根据文件名或文件类型，从知识库中检索对应文件的全部内容。
+    
+    【适用场景】
+    - 用户提到具体文件名："看一下test.py的内容"
+    - 用户想查看某类文件："PDF文件里讲了什么"
+    - 用户想找特定格式的内容："所有代码文件"
+    
+    【参数说明】
+    filename 支持多种格式：
+    - 文件类型：`pdf`、`py`、`md`、`txt`、`doc`、`docx`
+    - 完整文件名：`report.pdf`、`main.py`
+    - 部分文件名：`test`、`report`、`算法`
+    
+    【使用示例】
+    - "PDF文件有哪些内容？" → search_by_filename("pdf")
+    - "看一下README.md" → search_by_filename("README.md")
+    - "那个算法文件" → search_by_filename("算法")
+    - "所有Python代码" → search_by_filename("py")
+    
+    【不适用场景】
+    - 用户有具体问题需要语义搜索 → 使用 ask_knowledge_base
+    - 用户只想看有哪些文件 → 使用 list_knowledge_base_files
+    
+    【返回信息】
+    - 匹配文件的内容片段
+    - 每个片段的来源文件名
+    - 片段总数
     
     参数:
-        filename: 文件名或文件类型关键词，如"pdf"、"算法.pdf"、"py"
+        filename: 文件名或文件类型关键词
     """
     cfg = config.get("configurable", {}) or {}
     project_id = cfg.get("project_id", "default")
@@ -278,12 +341,40 @@ def search_by_filename(filename: str, config: RunnableConfig) -> str:
 @tool
 def ask_knowledge_base(query: str, config: RunnableConfig) -> str:
     """
-    企业内部知识库语义搜索工具。
-    根据用户问题进行语义检索，返回最相关的内容。
-    当用户有具体问题时使用此工具，如"Python是什么"、"如何配置环境"。
+    知识库语义搜索工具 - 智能检索知识库内容
+    
+    【核心功能】
+    使用语义理解技术，从知识库中检索与用户问题最相关的内容。
+    这是最常用的知识库查询工具。
+    
+    【适用场景】
+    - 用户有具体问题需要从知识库找答案
+    - 问题涉及已上传文档的内容
+    - 需要跨多个文档进行语义搜索
+    
+    【使用示例】
+    - "这个项目的架构是什么？" → ask_knowledge_base("项目架构")
+    - "如何配置环境？" → ask_knowledge_base("如何配置环境")
+    - "RAG系统的工作原理" → ask_knowledge_base("RAG系统工作原理")
+    - "有什么使用说明？" → ask_knowledge_base("使用说明")
+    
+    【不适用场景】
+    - 用户只想看有哪些文件 → 使用 list_knowledge_base_files
+    - 用户要找特定文件名的文件 → 使用 search_by_filename
+    - 通用知识问题（不涉及知识库）→ 使用 general_qa
+    
+    【搜索特点】
+    - 基于语义相似度，而非关键词匹配
+    - 支持中文自然语言查询
+    - 返回最相关的Top-K结果
+    - 自动进行相关性判断
+    
+    【返回信息】
+    - 基于检索内容生成的回答
+    - 如果没有相关内容，会返回友好提示
     
     参数:
-        query: 用户的问题或搜索关键词
+        query: 用户的自然语言问题，建议保持原意传递
     """
     cfg = config.get("configurable", {}) or {}
     session_id = cfg.get("session_id")

@@ -1,0 +1,378 @@
+{
+  "generated_at": "2026-03-03T23:15:24.787669",
+  "project_id": "rag_test_kb",
+  "retrieval_metrics": {
+    "summary": {
+      "avg_precision": 0.787,
+      "avg_recall": 0.784,
+      "avg_mrr": 0.893,
+      "avg_latency_ms": 1343.4
+    },
+    "by_category": {
+      "factual": {
+        "count": 5,
+        "avg_recall": 0.87
+      },
+      "technical": {
+        "count": 8,
+        "avg_recall": 0.881
+      },
+      "architecture": {
+        "count": 5,
+        "avg_recall": 0.76
+      },
+      "usage": {
+        "count": 4,
+        "avg_recall": 0.662
+      },
+      "troubleshooting": {
+        "count": 3,
+        "avg_recall": 0.583
+      }
+    },
+    "details": [
+      {
+        "id": "doc_001",
+        "category": "factual",
+        "precision": 0.667,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 2345.36
+      },
+      {
+        "id": "doc_002",
+        "category": "factual",
+        "precision": 1.0,
+        "recall": 0.8,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 937.23
+      },
+      {
+        "id": "doc_003",
+        "category": "factual",
+        "precision": 1.0,
+        "recall": 0.75,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 831.27
+      },
+      {
+        "id": "doc_004",
+        "category": "factual",
+        "precision": 0.667,
+        "recall": 0.8,
+        "mrr": 1.0,
+        "ndcg": 0.9,
+        "latency_ms": 767.72
+      },
+      {
+        "id": "doc_005",
+        "category": "factual",
+        "precision": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1407.19
+      },
+      {
+        "id": "doc_006",
+        "category": "technical",
+        "precision": 0.667,
+        "recall": 0.75,
+        "mrr": 1.0,
+        "ndcg": 0.9,
+        "latency_ms": 786.89
+      },
+      {
+        "id": "doc_007",
+        "category": "technical",
+        "precision": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 830.17
+      },
+      {
+        "id": "doc_008",
+        "category": "technical",
+        "precision": 0.667,
+        "recall": 0.8,
+        "mrr": 1.0,
+        "ndcg": 0.9,
+        "latency_ms": 1431.86
+      },
+      {
+        "id": "doc_009",
+        "category": "technical",
+        "precision": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1183.76
+      },
+      {
+        "id": "doc_010",
+        "category": "technical",
+        "precision": 0.333,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1228.56
+      },
+      {
+        "id": "doc_011",
+        "category": "technical",
+        "precision": 1.0,
+        "recall": 0.75,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1789.67
+      },
+      {
+        "id": "doc_012",
+        "category": "technical",
+        "precision": 1.0,
+        "recall": 0.75,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1505.87
+      },
+      {
+        "id": "doc_013",
+        "category": "technical",
+        "precision": 0.667,
+        "recall": 1.0,
+        "mrr": 0.5,
+        "ndcg": 0.7,
+        "latency_ms": 1200.16
+      },
+      {
+        "id": "doc_014",
+        "category": "architecture",
+        "precision": 1.0,
+        "recall": 0.8,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1359.07
+      },
+      {
+        "id": "doc_015",
+        "category": "architecture",
+        "precision": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1230.49
+      },
+      {
+        "id": "doc_016",
+        "category": "architecture",
+        "precision": 0.667,
+        "recall": 0.4,
+        "mrr": 1.0,
+        "ndcg": 0.9,
+        "latency_ms": 870.87
+      },
+      {
+        "id": "doc_017",
+        "category": "architecture",
+        "precision": 1.0,
+        "recall": 0.8,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 830.1
+      },
+      {
+        "id": "doc_018",
+        "category": "architecture",
+        "precision": 1.0,
+        "recall": 0.8,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 861.73
+      },
+      {
+        "id": "doc_019",
+        "category": "usage",
+        "precision": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1672.13
+      },
+      {
+        "id": "doc_020",
+        "category": "usage",
+        "precision": 0.333,
+        "recall": 0.25,
+        "mrr": 0.333,
+        "ndcg": 0.5,
+        "latency_ms": 2956.37
+      },
+      {
+        "id": "doc_021",
+        "category": "usage",
+        "precision": 1.0,
+        "recall": 0.4,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1410.68
+      },
+      {
+        "id": "doc_022",
+        "category": "usage",
+        "precision": 0.667,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1628.22
+      },
+      {
+        "id": "doc_023",
+        "category": "troubleshooting",
+        "precision": 1.0,
+        "recall": 0.75,
+        "mrr": 1.0,
+        "ndcg": 1.0,
+        "latency_ms": 1641.73
+      },
+      {
+        "id": "doc_024",
+        "category": "troubleshooting",
+        "precision": 0.333,
+        "recall": 1.0,
+        "mrr": 0.5,
+        "ndcg": 0.667,
+        "latency_ms": 1488.43
+      },
+      {
+        "id": "doc_025",
+        "category": "troubleshooting",
+        "precision": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "ndcg": 0,
+        "latency_ms": 1389.51
+      }
+    ]
+  },
+  "boundary_test": {
+    "summary": {
+      "total": 8,
+      "correctly_handled": 8,
+      "accuracy": 1.0,
+      "potential_hallucinations": 0,
+      "hallucination_rate": 0.0
+    },
+    "details": [
+      {
+        "id": "unanswerable_001",
+        "query": "量子计算机如何实现量子纠缠？",
+        "category": "out_of_domain",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": false,
+        "relevance_score": 0.30283159017562866,
+        "deny_reason": "relevant",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_002",
+        "query": "2024年世界杯冠军是谁？",
+        "category": "out_of_domain",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": true,
+        "relevance_score": 0.14007667700449622,
+        "deny_reason": "low_vector_relevance",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_003",
+        "query": "如何制作红烧肉？",
+        "category": "out_of_domain",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": true,
+        "relevance_score": 0.20627470811208093,
+        "deny_reason": "low_vector_relevance",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_004",
+        "query": "这个系统支持实时语音通话吗？",
+        "category": "in_domain_but_missing",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": false,
+        "relevance_score": 0.3363887468973795,
+        "deny_reason": "relevant",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_005",
+        "query": "如何配置多语言支持？",
+        "category": "in_domain_but_missing",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": false,
+        "relevance_score": 0.40314582983652747,
+        "deny_reason": "relevant",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_006",
+        "query": "系统支持哪些支付方式？",
+        "category": "in_domain_but_missing",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": true,
+        "relevance_score": 0.2895382046699524,
+        "deny_reason": "low_vector_relevance",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_007",
+        "query": "",
+        "category": "invalid_input",
+        "expected": "should_reject",
+        "has_denial": true,
+        "should_deny_by_score": true,
+        "relevance_score": 0.27170012394587195,
+        "deny_reason": "low_vector_relevance",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      },
+      {
+        "id": "unanswerable_008",
+        "query": "asdfghjkl qwertyuiop zxcvbnm",
+        "category": "invalid_input",
+        "expected": "should_deny",
+        "has_denial": true,
+        "should_deny_by_score": true,
+        "relevance_score": 0.1972505648930868,
+        "deny_reason": "low_vector_relevance",
+        "potential_hallucination": false,
+        "correctly_handled": true
+      }
+    ]
+  },
+  "performance_analysis": {
+    "avg_total_ms": 2.15,
+    "avg_embedding_ms": 1.51,
+    "avg_db_ms": 0.65,
+    "bottleneck": "embedding_api",
+    "optimization_suggestion": "考虑本地Embedding模型或缓存"
+  },
+  "recommendations": [
+    "🔧 troubleshooting类问题召回率低，建议优化关键词或增加相关文档"
+  ]
+}

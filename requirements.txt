@@ -1,0 +1,30 @@
+# Core Dependencies
+langchain>=0.2.0
+langchain-openai>=0.1.0
+langchain-community>=0.2.0
+langgraph>=0.2.0
+chromadb>=0.4.0
+python-dotenv>=1.0.0
+streamlit>=1.30.0
+
+# Document Processing
+pypdf>=4.0.0
+python-docx>=1.1.0
+markdown>=3.5.0
+unstructured>=0.12.0
+
+# Database & Storage
+# SQLite is built-in to Python, no extra package needed
+
+# HTTP & API
+requests>=2.31.0
+httpx>=0.25.0
+openai>=1.0.0
+
+# Utilities
+pydantic>=2.0.0
+tiktoken>=0.5.0
+tenacity>=8.2.0
+
+# Optional: DeepSeek, Zhipu, Moonshot support
+# These use OpenAI-compatible APIs, no extra packages needed

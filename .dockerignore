@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Local data (will be mounted as volumes)
+data/vector_db/
+*.db
+*.sqlite
+
+# Logs (will be mounted as volumes)
+logs/
+*.log
+
+# Environment files (should not be in image)
+.env
+.env.local
+.env.*.local
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Misc
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# Metrics reports (will be mounted)
+metrics/reports/
+metrics/rag_tests/

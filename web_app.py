@@ -6,6 +6,8 @@ import streamlit as st
 
 # Service Layer
 from src.service import KnowledgeBaseService, ChatService, DocumentService
+from src.utils.model_manager import model_manager
+from config.settings import settings
 
 # ==================== App State ====================
 def init_app_state():
@@ -151,6 +153,71 @@ def render_chat_page():
     render_chat_area(chat_service, pid, sid)
 
 
+def render_model_selector():
+    """渲染模型选择器"""
+    st.subheader("🤖 模型配置")
+    
+    # 获取当前模型状态
+    status = model_manager.get_model_status()
+    
+    # Chat模型选择
+    chat_models = model_manager.list_chat_models()
+    current_chat = model_manager.get_current_chat_model_id()
+    
+    chat_options = {m.id: f"{m.name} ({m.provider.value})" for m in chat_models}
+    chat_ids = list(chat_options.keys())
+    
+    # 检查当前模型是否在列表中
+    if current_chat not in chat_ids:
+        current_chat = chat_ids[0] if chat_ids else None
+    
+    selected_chat = st.selectbox(
+        "对话模型",
+        options=chat_ids,
+        format_func=lambda x: chat_options.get(x, x),
+        index=chat_ids.index(current_chat) if current_chat in chat_ids else 0,
+        key="chat_model_selector"
+    )
+    
+    if selected_chat and selected_chat != current_chat:
+        success = model_manager.set_current_chat_model(selected_chat)
+        if success:
+            st.success(f"已切换到 {chat_options.get(selected_chat, selected_chat)}")
+            st.rerun()
+        else:
+            st.error("切换模型失败，请检查API Key配置")
+    
+    # Embedding模型选择
+    embedding_models = model_manager.list_embedding_models()
+    current_embedding = model_manager.get_current_embedding_model_id()
+    
+    embedding_options = {m.id: f"{m.name} ({m.dimension}D)" for m in embedding_models}
+    embedding_ids = list(embedding_options.keys())
+    
+    if current_embedding not in embedding_ids:
+        current_embedding = embedding_ids[0] if embedding_ids else None
+    
+    selected_embedding = st.selectbox(
+        "Embedding模型",
+        options=embedding_ids,
+        format_func=lambda x: embedding_options.get(x, x),
+        index=embedding_ids.index(current_embedding) if current_embedding in embedding_ids else 0,
+        key="embedding_model_selector"
+    )
+    
+    if selected_embedding and selected_embedding != current_embedding:
+        success = model_manager.set_current_embedding_model(selected_embedding)
+        if success:
+            st.success(f"已切换到 {embedding_options.get(selected_embedding, selected_embedding)}")
+            st.rerun()
+        else:
+            st.error("切换模型失败，请检查API Key配置")
+    
+    # 显示当前模型信息
+    with st.expander("📊 模型状态", expanded=False):
+        st.json(status)
+
+
 def render_chat_sidebar(kb_service, doc_service, pid, sid):
     """渲染聊天侧边栏"""
     st.header("🧭 控制台")
@@ -160,6 +227,11 @@ def render_chat_sidebar(kb_service, doc_service, pid, sid):
         st.rerun()
     
     st.divider()
+    
+    # 模型选择器（如果启用）
+    if settings.ENABLE_MODEL_SWITCHING:
+        render_model_selector()
+        st.divider()
     
     # 会话管理
     st.subheader("会话")
