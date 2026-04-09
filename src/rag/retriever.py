@@ -6,12 +6,12 @@ RAG检索模块 - 负责从向量数据库检索相关文档
 2. 多知识库隔离
 3. 混合检索模式（向量 + BM25 + RRF）
 """
-from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document
 from config.settings import settings
 from src.utils.logger import setup_logger
 from src.utils.model_manager import model_manager
+from src.rag.stores import get_vector_store
 from typing import Dict, List, Tuple, Optional
 import hashlib
 import time
@@ -89,27 +89,26 @@ class CachedEmbeddings:
 
 class VectorRetriever:
     def __init__(self, enable_cache: bool = True):
-        self.persist_dir = str(settings.DB_DIR)
         self.enable_cache = enable_cache
-        
+
         # 使用模型管理器获取Embedding模型
         base_embeddings = model_manager.get_embedding_model()
-        
+
         # 包装为带缓存的Embedding
         if enable_cache:
             self.embeddings = CachedEmbeddings(base_embeddings)
-            logger.info("✅ Embedding缓存已启用")
+            logger.info("Embedding缓存已启用")
         else:
             self.embeddings = base_embeddings
 
-        if not settings.DB_DIR.exists():
-            logger.error(f"数据库目录不存在: {self.persist_dir}，请先运行入库脚本。")
-            raise FileNotFoundError(f"数据库目录不存在: {self.persist_dir}")
+        # 使用抽象层获取向量存储
+        self.store = get_vector_store()
 
-        self.vector_db = Chroma(
-            persist_directory=self.persist_dir,
-            embedding_function=self.embeddings
-        )
+        # 获取底层 Chroma 实例用于 get 操作（混合检索需要）
+        if hasattr(self.store, 'raw_client'):
+            self.vector_db = self.store.raw_client
+        else:
+            self.vector_db = self.store
 
     def _build_hybrid_retriever(self, project_id: str) -> Optional["HybridRetriever"]:
         """

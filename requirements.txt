@@ -34,3 +34,9 @@ tenacity>=8.2.0
 # Sprint 1: 检索增强
 rank-bm25>=0.2.2
 cohere>=5.0.0
+
+# Sprint 2: 基础设施
+qdrant-client>=1.7.0
+langchain-qdrant>=0.1.0
+psycopg2-binary>=2.9.0
+redis>=5.0.0

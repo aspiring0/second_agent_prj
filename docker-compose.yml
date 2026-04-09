@@ -9,32 +9,50 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      # 持久化数据目录
       - ./data:/app/data
-      # 持久化日志
       - ./logs:/app/logs
-      # 持久化指标数据
       - ./metrics:/app/metrics
     environment:
-      # API Keys - 从 .env 文件读取
+      # API Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_API_BASE=${OPENAI_API_BASE:-https://api.openai.com/v1}
-      # 可选：其他 API Keys
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - ZHIPU_API_KEY=${ZHIPU_API_KEY:-}
       - MOONSHOT_API_KEY=${MOONSHOT_API_KEY:-}
       # 模型配置
-      - CHAT_MODEL=${CHAT_MODEL:-gpt-3.5-turbo}
+      - CHAT_MODEL=${CHAT_MODEL:-gpt-4o-mini}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-3-small}
       - AGENT_MODEL=${AGENT_MODEL:-gpt-4o-mini}
       # RAG 参数
       - CHUNK_SIZE=${CHUNK_SIZE:-800}
       - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
       - RETRIEVAL_TOP_K=${RETRIEVAL_TOP_K:-3}
-      # 功能开关
       - ENABLE_MODEL_SWITCHING=${ENABLE_MODEL_SWITCHING:-true}
+      # Sprint 1: 检索增强
+      - RETRIEVAL_MODE=${RETRIEVAL_MODE:-hybrid}
+      - ENABLE_RERANKER=${ENABLE_RERANKER:-false}
+      - ENABLE_QUERY_REWRITE=${ENABLE_QUERY_REWRITE:-true}
+      # Sprint 2: 基础设施
+      - VECTOR_STORE_BACKEND=${VECTOR_STORE_BACKEND:-chroma}
+      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-rag_agent}
+      - POSTGRES_USER=${POSTGRES_USER:-rag}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rag_secret}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rag_network
     restart: unless-stopped
-    # 资源限制（可选，根据需要调整）
     deploy:
       resources:
         limits:
@@ -42,8 +60,61 @@ services:
         reservations:
           memory: 1G
 
-# 数据卷定义（可选：使用命名卷代替绑定挂载）
-# volumes:
-#   data:
-#   logs:
-#   metrics:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: rag-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: rag_agent
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+
+networks:
+  rag_network:
+    driver: bridge
+
+volumes:
+  qdrant_data:
+  postgres_data:
+  redis_data:
