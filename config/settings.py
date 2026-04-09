@@ -65,5 +65,20 @@ class Settings:
     # 是否启用动态模型切换（Web界面）
     ENABLE_MODEL_SWITCHING = os.getenv("ENABLE_MODEL_SWITCHING", "true").lower() == "true"
 
+    # ==================== Sprint 1: 检索增强配置 ====================
+    # 混合检索模式：vector（纯向量）| hybrid（向量+BM25+RRF）
+    RETRIEVAL_MODE = os.getenv("RETRIEVAL_MODE", "hybrid")
+    BM25_TOP_K = int(os.getenv("BM25_TOP_K", "10"))
+    RRF_K = int(os.getenv("RRF_K", "60"))
+
+    # Reranker 重排序
+    ENABLE_RERANKER = os.getenv("ENABLE_RERANKER", "false").lower() == "true"
+    RERANKER_BACKEND = os.getenv("RERANKER_BACKEND", "cohere")  # "cohere" | "bge"
+    COHERE_API_KEY = os.getenv("COHERE_API_KEY", "")
+
+    # 查询改写
+    ENABLE_QUERY_REWRITE = os.getenv("ENABLE_QUERY_REWRITE", "true").lower() == "true"
+    QUERY_REWRITE_STRATEGY = os.getenv("QUERY_REWRITE_STRATEGY", "hyde")  # "hyde"|"multi"|"auto"
+
 # 实例化对象，方便其他模块直接 import settings
 settings = Settings()
