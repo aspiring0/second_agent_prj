@@ -20,3 +20,10 @@ class AgentState(TypedDict):
     消息列表，用于存储智能体之间传递的消息
     """
     next_step: str
+
+    # Sprint 1: 查询改写相关字段
+    rewritten_queries: List[str]
+    """改写后的查询列表"""
+
+    query_type: str
+    """查询类型：simple（简单查询）| complex（复杂查询）"""

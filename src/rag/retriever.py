@@ -4,9 +4,11 @@ RAG检索模块 - 负责从向量数据库检索相关文档
 包含：
 1. Embedding缓存机制
 2. 多知识库隔离
+3. 混合检索模式（向量 + BM25 + RRF）
 """
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
+from langchain_core.documents import Document
 from config.settings import settings
 from src.utils.logger import setup_logger
 from src.utils.model_manager import model_manager
@@ -109,21 +111,80 @@ class VectorRetriever:
             embedding_function=self.embeddings
         )
 
-    def query(self, question: str, project_id: str = DEFAULT_PROJECT_ID, top_k=3) -> List[Tuple]:
+    def _build_hybrid_retriever(self, project_id: str) -> Optional["HybridRetriever"]:
+        """
+        构建混合检索器（懒加载）
+
+        Args:
+            project_id: 知识库ID
+
+        Returns:
+            HybridRetriever 实例，构建失败返回 None
+        """
+        try:
+            from src.rag.hybrid_retriever import HybridRetriever
+
+            # 从向量数据库获取所有文档用于 BM25 索引
+            filter_rule = {"project_id": project_id}
+            all_results = self.vector_db.get(
+                where=filter_rule,
+                include=["documents", "metadatas"]
+            )
+
+            if not all_results or not all_results.get("documents"):
+                logger.warning(f"项目 {project_id} 没有文档可供构建 BM25 索引")
+                return None
+
+            documents = []
+            for i, doc_content in enumerate(all_results["documents"]):
+                metadata = all_results["metadatas"][i] if all_results["metadatas"] else {}
+                documents.append(Document(page_content=doc_content, metadata=metadata))
+
+            return HybridRetriever(
+                vector_store=self.vector_db,
+                documents=documents,
+                project_id=project_id
+            )
+        except ImportError:
+            logger.warning("rank-bm25 未安装，无法使用混合检索，回退到向量检索")
+            return None
+        except Exception as e:
+            logger.warning(f"构建混合检索器失败: {e}，回退到向量检索")
+            return None
+
+    def query(self, question: str, project_id: str = DEFAULT_PROJECT_ID, top_k=3, mode: str = None) -> List[Tuple]:
         """
         检索相关文档
-        
+
         Args:
             question: 查询问题
             project_id: 知识库ID
             top_k: 返回结果数量
-            
+            mode: 检索模式，"vector" 或 "hybrid"。None 时从配置读取
+
         Returns:
             [(Document, score), ...] 列表
         """
-        start_time = time.time()
-        logger.info(f"🔍 检索: {question} [Project: {project_id}]")
+        # 确定检索模式
+        if mode is None:
+            mode = getattr(settings, 'RETRIEVAL_MODE', 'vector')
 
+        start_time = time.time()
+        logger.info(f"🔍 检索: {question} [Project: {project_id}] [Mode: {mode}]")
+
+        # 混合检索模式
+        if mode == "hybrid":
+            hybrid = self._build_hybrid_retriever(project_id)
+            if hybrid is not None:
+                bm25_top_k = getattr(settings, 'BM25_TOP_K', 10)
+                results = hybrid.retrieve(question, top_k=top_k)
+                latency = (time.time() - start_time) * 1000
+                logger.info(f"✅ 混合检索到 {len(results)} 条记录 ({latency:.0f}ms)")
+                return results
+            else:
+                logger.info("混合检索不可用，回退到向量检索")
+
+        # 默认向量检索模式
         filter_rule = {"project_id": project_id}
 
         try:
@@ -133,13 +194,13 @@ class VectorRetriever:
                 filter=filter_rule
             )
             latency = (time.time() - start_time) * 1000
-            
+
             # 记录缓存统计
             cache_info = ""
             if self.enable_cache and hasattr(self.embeddings, 'get_stats'):
                 stats = self.embeddings.get_stats()
                 cache_info = f" (缓存命中率: {stats['hit_rate']:.1%})"
-            
+
             logger.info(f"✅ 检索到 {len(results)} 条记录 ({latency:.0f}ms){cache_info}")
             return results
         except Exception as e:

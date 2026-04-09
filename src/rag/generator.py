@@ -37,12 +37,24 @@ class RAGGenerator:
 
         # 使用模型管理器获取LLM实例
         self.llm = model_manager.get_chat_model(temperature=0.1)
-        
+
         # --- 使用统一的提示词管理模块 ---
         # 从 PromptManager 获取提示词模板，便于统一管理和版本控制
         self.prompt_template = get_rag_generator_prompt()
         self.relevance_prompt = get_relevance_check_prompt()
-        
+
+        # --- Sprint 1: Reranker 重排序 ---
+        self.enable_reranker = settings.ENABLE_RERANKER
+        self.reranker = None
+        if self.enable_reranker:
+            try:
+                from src.rag.reranker import Reranker
+                self.reranker = Reranker(backend=settings.RERANKER_BACKEND)
+                logger.info(f"✅ Reranker 已启用，后端: {settings.RERANKER_BACKEND}")
+            except Exception as e:
+                logger.warning(f"Reranker 初始化失败: {e}，将不使用重排序")
+                self.enable_reranker = False
+
         logger.info("✅ RAG Generator 初始化完成，使用统一提示词管理")
         
     def _format_docs(self, docs: List) -> str:
@@ -153,8 +165,13 @@ class RAGGenerator:
         start_time = time.time()
         logger.info(f"🤖 收到问题: {question} (Session: {session_id})")
 
-        # 1. 检索
-        docs = self.retriever.query(question, project_id=project_id, top_k=3)
+        # 1. 检索 → Rerank → 生成
+        docs = self.retriever.query(question, project_id=project_id, top_k=10)
+
+        # Sprint 1: 检索后重排序
+        if self.enable_reranker and self.reranker and docs:
+            docs = self.reranker.rerank(question, docs, top_k=3)
+            logger.info(f"Rerank 后保留 {len(docs)} 条结果")
         
         # 2. 判断是否应该拒绝回答
         if self.enable_relevance_check:

@@ -30,3 +30,7 @@ tenacity>=8.2.0
 
 # Optional: DeepSeek, Zhipu, Moonshot support
 # These use OpenAI-compatible APIs, no extra packages needed
+
+# Sprint 1: 检索增强
+rank-bm25>=0.2.2
+cohere>=5.0.0
