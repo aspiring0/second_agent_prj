@@ -3,8 +3,7 @@
 # 使其可以被智能体（Agent）调用和使用。
 from langchain_core.tools import tool
 from langgraph.config import RunnableConfig
-from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import ChatOpenAI
 #导入RAG生成器
 from src.rag.generator import RAGGenerator
 from config.settings import settings
@@ -28,15 +27,12 @@ general_llm = ChatOpenAI(
 
 # 初始化向量数据库连接（用于元数据查询）
 def get_chroma_db():
-    """获取 Chroma 数据库连接"""
-    return Chroma(
-        persist_directory=str(settings.DB_DIR),
-        embedding_function=OpenAIEmbeddings(
-            model=settings.EMBEDDING_MODEL,
-            openai_api_key=settings.OPENAI_API_KEY,
-            openai_api_base=settings.OPENAI_BASE_URL
-        )
-    )
+    """获取向量数据库连接（通过抽象层）"""
+    from src.rag.stores import get_vector_store
+    store = get_vector_store()
+    if hasattr(store, 'raw_client'):
+        return store.raw_client
+    return store
 
 # ============== 通用能力工具 ==============
 

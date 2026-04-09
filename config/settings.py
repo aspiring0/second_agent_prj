@@ -80,5 +80,25 @@ class Settings:
     ENABLE_QUERY_REWRITE = os.getenv("ENABLE_QUERY_REWRITE", "true").lower() == "true"
     QUERY_REWRITE_STRATEGY = os.getenv("QUERY_REWRITE_STRATEGY", "hyde")  # "hyde"|"multi"|"auto"
 
+    # ==================== Sprint 2: 基础设施配置 ====================
+    # 向量存储后端：chroma（默认本地）| qdrant（分布式）
+    VECTOR_STORE_BACKEND = os.getenv("VECTOR_STORE_BACKEND", "chroma")
+
+    # Qdrant 配置
+    QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+    QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
+    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "rag_documents")
+
+    # PostgreSQL 配置（不配置时 fallback 到 SQLite）
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST", "")
+    POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+    POSTGRES_DB = os.getenv("POSTGRES_DB", "rag_agent")
+    POSTGRES_USER = os.getenv("POSTGRES_USER", "rag")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+
+    # Redis 配置
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+
 # 实例化对象，方便其他模块直接 import settings
 settings = Settings()
