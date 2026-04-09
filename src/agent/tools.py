@@ -161,26 +161,142 @@ def get_current_time(config: RunnableConfig) -> str:
 def calculate_expression(expression: str, config: RunnableConfig = None) -> str:
     """
     计算器工具。执行数学计算和表达式求值。
-    支持基本运算、百分比、幂运算等。
-    
+    支持基本运算、百分比等。
+
     参数:
-        expression: 数学表达式，如"2+3*4"、"100*0.15"、"2**10"
+        expression: 数学表达式，如"2+3*4"、"100*0.15"、"(10+5)*2"
     """
     try:
         logger.info(f"🔧 计算: {expression}")
-        # 安全的数学计算
+        # 安全检查：只允许数字、运算符和括号
         allowed_chars = set("0123456789+-*/.()% ")
         if not all(c in allowed_chars for c in expression):
             # 使用 LLM 处理复杂的数学问题
+            logger.info("表达式包含非法字符，交给 LLM 处理")
             prompt = f"请计算以下数学问题，只输出数字结果：\n{expression}"
             response = general_llm.invoke(prompt)
             return response.content
-        
-        result = eval(expression)
+
+        # 安全的数学解析器：逐字符解析，支持 + - * / % ( )
+        result = _safe_math_eval(expression)
         return f"计算结果：{expression} = {result}"
     except Exception as e:
         logger.error(f"计算失败: {e}")
         return f"计算时出错: {str(e)}。请检查表达式格式。"
+
+
+def _safe_math_eval(expr: str):
+    """
+    安全的数学表达式解析器
+    仅支持数字和 + - * / . % ( ) 和空格，不使用 eval()
+    使用递归下降解析器实现
+    """
+    import operator as _op
+
+    # 预处理：去除空格
+    tokens = _tokenize_math(expr)
+    pos = [0]  # 使用列表包装以便在闭包中修改
+
+    def peek():
+        if pos[0] < len(tokens):
+            return tokens[pos[0]]
+        return None
+
+    def consume():
+        tok = tokens[pos[0]]
+        pos[0] += 1
+        return tok
+
+    def parse_number():
+        """解析数字（整数或小数）"""
+        tok = consume()
+        try:
+            return float(tok)
+        except ValueError:
+            raise ValueError(f"无效的数字: {tok}")
+
+    def parse_factor():
+        """解析因子：数字 或 (表达式) 或 一元正负号"""
+        tok = peek()
+        if tok is None:
+            raise ValueError("表达式不完整")
+        if tok == '(':
+            consume()  # 吃掉 '('
+            val = parse_expr()
+            if peek() != ')':
+                raise ValueError("缺少右括号")
+            consume()  # 吃掉 ')'
+            return val
+        elif tok == '-':
+            consume()
+            return -parse_factor()
+        elif tok == '+':
+            consume()
+            return parse_factor()
+        else:
+            return parse_number()
+
+    def parse_term():
+        """解析项：处理 * / % 运算"""
+        left = parse_factor()
+        while peek() in ('*', '/', '%'):
+            op = consume()
+            right = parse_factor()
+            if op == '*':
+                left = left * right
+            elif op == '/':
+                if right == 0:
+                    raise ValueError("除数不能为零")
+                left = left / right
+            elif op == '%':
+                left = left % right
+        return left
+
+    def parse_expr():
+        """解析表达式：处理 + - 运算"""
+        left = parse_term()
+        while peek() in ('+', '-'):
+            op = consume()
+            right = parse_term()
+            if op == '+':
+                left = left + right
+            else:
+                left = left - right
+        return left
+
+    result = parse_expr()
+    if pos[0] != len(tokens):
+        raise ValueError("表达式格式错误，存在多余字符")
+    # 如果结果是整数，返回整数形式
+    if isinstance(result, float) and result == int(result):
+        return int(result)
+    return result
+
+
+def _tokenize_math(expr: str):
+    """
+    将数学表达式分词为 token 列表
+    支持：数字（含小数）、运算符 + - * / %、括号 ( )
+    """
+    tokens = []
+    i = 0
+    while i < len(expr):
+        ch = expr[i]
+        if ch.isspace():
+            i += 1
+            continue
+        if ch in '+-*/%()':
+            tokens.append(ch)
+            i += 1
+        elif ch.isdigit() or ch == '.':
+            # 收集完整数字（含小数点）
+            start = i
+            while i < len(expr) and (expr[i].isdigit() or expr[i] == '.'):
+                i += 1
+            tokens.append(expr[start:i])
+        else:
+            raise ValueError(f"非法字符: '{ch}'")
+    return tokens
 
 @tool
 def list_knowledge_base_files(config: RunnableConfig) -> str:

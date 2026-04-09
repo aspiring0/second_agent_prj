@@ -44,7 +44,7 @@ class Settings:
     # 推荐：gpt-4o-mini (性价比高)
     # 高质量：gpt-4o
     # 国产替代：deepseek-chat, glm-4-flash
-    CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-3.5-turbo")
+    CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")
     
     # Agent模型：用于多智能体系统（研究员/作家）
     # 建议使用能力更强的模型

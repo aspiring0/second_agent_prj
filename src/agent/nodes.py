@@ -54,42 +54,41 @@ def get_llm_with_tools():
     return llm.bind_tools(all_tools)
 
 
-# 预先获取绑定工具的LLM实例（用于Researcher节点）
-llm_with_tools = get_llm_with_tools()
-
-
 # --- 角色 1: 研究员 (Researcher) ---
 def researcher_node(state: AgentState) -> AgentState:
     """
     研究员节点：负责理解用户意图，调用工具获取信息
-    
+
     职责：
     1. 分析用户问题类型
     2. 选择合适的工具获取信息
     3. 将获取的信息传递给 Writer
-    
+
     使用统一的提示词管理模块获取系统提示
     """
     logger.info("🔬 [研究员] 正在分析用户问题...")
-    
+
     # 1. 获取当前所有的聊天记录
     messages = state["messages"]
-    
+
     # 2. 使用统一的提示词管理模块获取系统提示
     system_prompt = get_researcher_system_message()
-    
-    # 3. 调用模型（带工具绑定）
+
+    # 3. 在函数体内调用 get_llm_with_tools()，确保每次使用最新模型
+    _llm_with_tools = get_llm_with_tools()
+
+    # 4. 调用模型（带工具绑定）
     # 我们把 [人设] + [历史记录] 一起发给模型
-    response = llm_with_tools.invoke([system_prompt] + messages)
+    response = _llm_with_tools.invoke([system_prompt] + messages)
     
-    # 4. 记录调试信息
+    # 5. 记录调试信息
     if response.tool_calls:
         tool_names = [tc.get("name", "unknown") for tc in response.tool_calls]
         logger.info(f"🔧 [研究员] 决定调用工具: {tool_names}")
     else:
         logger.info("✅ [研究员] 无需调用工具，准备移交 Writer")
-    
-    # 5. 返回结果
+
+    # 6. 返回结果
     # LangGraph 会自动根据 state.py 里的定义，把这个 response 追加到 messages 列表里
     return {"messages": [response]}
 
