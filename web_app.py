@@ -2,6 +2,9 @@
 Web Application - 前端展示层 (Frontend)
 只负责 UI 渲染和用户交互，所有业务逻辑由 Service 层处理
 """
+import os
+from pathlib import Path
+
 import streamlit as st
 
 # Service Layer
@@ -214,8 +217,167 @@ def render_model_selector():
             st.error("切换模型失败，请检查API Key配置")
     
     # 显示当前模型信息
-    with st.expander("📊 模型状态", expanded=False):
+    with st.expander("模型状态", expanded=False):
         st.json(status)
+
+
+# ==================== Settings Panel ====================
+def _save_to_env_file(api_key: str, base_url: str, model_id: str) -> bool:
+    """
+    将配置写入 .env 文件（追加或更新对应行）
+
+    Args:
+        api_key: API Key
+        base_url: API Base URL
+        model_id: 模型 ID
+
+    Returns:
+        是否保存成功
+    """
+    env_path = Path(__file__).resolve().parent / ".env"
+    lines: list[str] = []
+
+    # 读取现有内容
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+    # 需要更新的键值对
+    updates = {
+        "OPENAI_API_KEY": api_key,
+        "OPENAI_API_BASE": base_url,
+        "CHAT_MODEL": model_id,
+    }
+
+    # 逐行更新或标记
+    updated_keys: set[str] = set()
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        for key, value in updates.items():
+            if stripped.startswith(f"{key}="):
+                lines[i] = f"{key}={value}\n"
+                updated_keys.add(key)
+                break
+
+    # 追加未找到的键
+    for key, value in updates.items():
+        if key not in updated_keys:
+            lines.append(f"{key}={value}\n")
+
+    try:
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+        return True
+    except Exception as e:
+        st.error(f"写入 .env 文件失败: {e}")
+        return False
+
+
+def render_settings_panel():
+    """
+    渲染侧边栏"设置"折叠区
+    包含 API Key 输入、Base URL 配置、模型选择、测试连接、保存配置
+    """
+    # 从 session_state 读取或初始化默认值
+    current_api_key = os.getenv("OPENAI_API_KEY", "")
+    current_base_url = os.getenv("OPENAI_API_BASE", settings.OPENAI_BASE_URL or "")
+
+    if "settings_api_key" not in st.session_state:
+        st.session_state["settings_api_key"] = current_api_key
+    if "settings_base_url" not in st.session_state:
+        st.session_state["settings_base_url"] = current_base_url
+    if "settings_model_id" not in st.session_state:
+        st.session_state["settings_model_id"] = model_manager.get_current_chat_model_id()
+
+    with st.expander("设置", expanded=False):
+        # 1. API Key 输入框（密码模式）
+        api_key_hint = ""
+        if current_api_key and len(current_api_key) >= 8:
+            api_key_hint = f"当前: ...{current_api_key[-8:]}"
+        elif current_api_key:
+            api_key_hint = f"当前: {current_api_key[:3]}***"
+
+        input_api_key = st.text_input(
+            "API Key",
+            value=st.session_state["settings_api_key"],
+            type="password",
+            help=f"输入 OpenAI API Key。{api_key_hint}",
+            key="settings_api_key_input",
+        )
+
+        # 2. API Base URL 输入框
+        input_base_url = st.text_input(
+            "API Base URL",
+            value=st.session_state["settings_base_url"],
+            help="留空则使用 OpenAI 官方地址",
+            key="settings_base_url_input",
+        )
+
+        # 3. 模型下拉选择
+        available_models = model_manager.get_available_models()
+        model_options = {m["id"]: f"{m['name']} ({m['provider']})" for m in available_models}
+        model_ids = list(model_options.keys())
+
+        current_model = st.session_state["settings_model_id"]
+        if current_model not in model_ids:
+            current_model = model_ids[0] if model_ids else ""
+
+        selected_model = st.selectbox(
+            "默认对话模型",
+            options=model_ids,
+            format_func=lambda x: model_options.get(x, x),
+            index=model_ids.index(current_model) if current_model in model_ids else 0,
+            key="settings_model_selector",
+        )
+        st.session_state["settings_model_id"] = selected_model
+
+        # 4. 测试连接按钮
+        if st.button("测试连接", key="settings_test_connection"):
+            test_key = input_api_key or current_api_key
+            test_url = input_base_url or current_base_url
+            if not test_key:
+                st.warning("请先输入 API Key")
+            else:
+                with st.spinner("正在测试连接..."):
+                    success, message = model_manager.test_connection(
+                        api_key=test_key,
+                        base_url=test_url if test_url else None,
+                        model_name=selected_model,
+                    )
+                if success:
+                    st.success(message)
+                else:
+                    st.error(message)
+
+        # 5. 保存配置按钮
+        if st.button("保存配置", key="settings_save_config"):
+            save_key = input_api_key or current_api_key
+            save_url = input_base_url or current_base_url
+            save_model = selected_model
+
+            if not save_key:
+                st.warning("API Key 不能为空")
+                return
+
+            # 更新内存中的 API Key 和 Base URL
+            ok = model_manager.update_api_key(save_key, save_url)
+            if not ok:
+                st.error("更新 API Key 失败")
+                return
+
+            # 切换模型
+            model_manager.set_current_chat_model(save_model)
+
+            # 写入 .env 文件
+            env_ok = _save_to_env_file(save_key, save_url, save_model)
+            if env_ok:
+                # 同步 session_state
+                st.session_state["settings_api_key"] = save_key
+                st.session_state["settings_base_url"] = save_url
+                st.session_state["settings_model_id"] = save_model
+                st.success("配置已保存并生效")
+            else:
+                st.warning("内存中已更新，但 .env 文件写入失败")
 
 
 def render_chat_sidebar(kb_service, doc_service, pid, sid):
@@ -232,7 +394,11 @@ def render_chat_sidebar(kb_service, doc_service, pid, sid):
     if settings.ENABLE_MODEL_SWITCHING:
         render_model_selector()
         st.divider()
-    
+
+    # 设置面板
+    render_settings_panel()
+    st.divider()
+
     # 会话管理
     st.subheader("会话")
     sessions = kb_service.get_sessions(pid)
