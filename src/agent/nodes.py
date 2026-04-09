@@ -8,17 +8,10 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from config.settings import settings
 from src.agent.state import AgentState
-from src.agent.tools import (
-    ask_knowledge_base, 
-    list_knowledge_base_files, 
-    search_by_filename,
-    general_qa,
-    summarize_text,
-    translate_text,
-    analyze_code,
-    get_current_time,
-    calculate_expression
-)
+from src.agent.tools_dir import get_all_tools
+
+# 获取所有工具
+all_tools = get_all_tools()
 from src.agent.prompts import (
     get_researcher_system_message, 
     get_writer_prompt,
@@ -28,21 +21,6 @@ from src.utils.logger import setup_logger
 from src.utils.model_manager import model_manager
 
 logger = setup_logger("MultiAgent_Nodes")
-
-# 所有可用工具
-all_tools = [
-    # 知识库相关
-    ask_knowledge_base,
-    list_knowledge_base_files,
-    search_by_filename,
-    # 通用能力
-    general_qa,
-    summarize_text,
-    translate_text,
-    analyze_code,
-    get_current_time,
-    calculate_expression
-]
 
 
 def get_llm_with_tools():
