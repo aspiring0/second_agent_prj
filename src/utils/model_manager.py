@@ -231,7 +231,7 @@ class ModelManager:
         self._current_chat_model: str = settings.CHAT_MODEL
         self._current_embedding_model: str = settings.EMBEDDING_MODEL
         
-        logger.info(f"🎛️ 模型管理器初始化完成")
+        logger.info("模型管理器初始化完成")
         logger.info(f"   当前Chat模型: {self._current_chat_model}")
         logger.info(f"   当前Embedding模型: {self._current_embedding_model}")
     
@@ -268,7 +268,7 @@ class ModelManager:
             return False
         
         self._current_chat_model = model_id
-        logger.info(f"✅ 切换对话模型: {config.name}")
+        logger.info(f"切换对话模型: {config.name}")
         return True
     
     def set_current_embedding_model(self, model_id: str) -> bool:
@@ -286,7 +286,7 @@ class ModelManager:
         self._current_embedding_model = model_id
         # 清空Embedding缓存，因为切换了模型
         self._embedding_cache.clear()
-        logger.info(f"✅ 切换Embedding模型: {config.name}")
+        logger.info(f"切换Embedding模型: {config.name}")
         return True
     
     def get_current_chat_model_id(self) -> str:
@@ -436,11 +436,89 @@ class ModelManager:
         
         return False, f"未知模型: {model_id}"
     
+    def update_api_key(self, api_key: str, base_url: Optional[str] = None) -> bool:
+        """
+        更新 API Key 和 Base URL，清除缓存的模型实例
+
+        Args:
+            api_key: 新的 API Key
+            base_url: 新的 API Base URL，None 则不修改
+
+        Returns:
+            是否更新成功
+        """
+        if not api_key or not api_key.strip():
+            logger.error("API Key 不能为空")
+            return False
+
+        # 更新环境变量，使后续 os.getenv 读取到新值
+        os.environ["OPENAI_API_KEY"] = api_key.strip()
+        if base_url is not None and base_url.strip():
+            os.environ["OPENAI_API_BASE"] = base_url.strip()
+
+        # 同步更新 settings 对象（单例已加载，需要手动刷新）
+        settings.OPENAI_API_KEY = api_key.strip()
+        if base_url is not None and base_url.strip():
+            settings.OPENAI_BASE_URL = base_url.strip()
+
+        # 清除所有缓存的模型实例，下次 get_chat_model / get_embedding_model 时重新创建
+        self.clear_cache()
+
+        logger.info("API Key 和 Base URL 已更新，模型缓存已清除")
+        return True
+
+    def get_available_models(self) -> List[Dict]:
+        """
+        返回可用模型列表（预设列表）
+
+        Returns:
+            模型信息字典列表，每项包含 id, name, provider 字段
+        """
+        models = []
+        for model_id, config in CHAT_MODELS.items():
+            models.append({
+                "id": config.id,
+                "name": config.name,
+                "provider": config.provider.value,
+                "model_name": config.model_name,
+                "description": config.description,
+            })
+        return models
+
+    def test_connection(self, api_key: str, base_url: Optional[str] = None, model_name: str = "gpt-4o-mini") -> tuple[bool, str]:
+        """
+        测试 API Key 是否有效
+
+        Args:
+            api_key: 要测试的 API Key
+            base_url: API Base URL，None 使用默认
+            model_name: 用于测试的模型名称
+
+        Returns:
+            (是否成功, 提示信息)
+        """
+        try:
+            test_base_url = base_url or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+            test_llm = ChatOpenAI(
+                model=model_name,
+                openai_api_key=api_key,
+                openai_api_base=test_base_url,
+                max_tokens=10,
+                temperature=0,
+            )
+            # 发送简单请求测试连接
+            test_llm.invoke("Hi")
+            return True, "连接成功，API Key 有效"
+        except Exception as e:
+            error_msg = str(e)
+            logger.warning(f"API Key 测试失败: {error_msg}")
+            return False, f"连接失败: {error_msg}"
+
     def clear_cache(self):
         """清空模型缓存"""
         self._chat_cache.clear()
         self._embedding_cache.clear()
-        logger.info("🧹 模型缓存已清空")
+        logger.info("模型缓存已清空")
 
 
 # 全局单例
