@@ -91,11 +91,18 @@ import py_compile, os
 files = [
     'src/agent/nodes.py',
     'src/agent/graph.py',
-    'src/agent/tools.py',
+    'src/agent/nodes_eval.py',
+    'src/agent/tools_dir/__init__.py',
+    'src/agent/tools_dir/knowledge_base.py',
+    'src/agent/tools_dir/general.py',
+    'src/agent/tools_dir/text_processing.py',
     'src/rag/generator.py',
     'src/rag/retriever.py',
+    'src/rag/stores/__init__.py',
+    'src/rag/stores/chroma_store.py',
     'src/rag/etl.py',
     'src/utils/db.py',
+    'src/utils/cache.py',
     'config/settings.py',
 ]
 passed = 0
@@ -119,6 +126,18 @@ if failed > 0:
 
     if [ $? -ne 0 ]; then
         echo "Syntax checks failed!"
+        exit 1
+    fi
+fi
+
+# ==================== Integration Test ====================
+if [ "$1" = "integration" ]; then
+    echo ">> Integration Tests (pytest)"
+
+    python -m pytest tests/test_components.py tests/test_agent.py -v --tb=short 2>&1
+
+    if [ $? -ne 0 ]; then
+        echo "Integration tests failed!"
         exit 1
     fi
 fi
