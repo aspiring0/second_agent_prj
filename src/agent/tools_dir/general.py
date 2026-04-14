@@ -6,7 +6,7 @@ from langchain_core.tools import tool, BaseTool
 from langgraph.config import RunnableConfig
 from typing import List
 
-from ._common import logger, general_llm
+from ._common import logger, get_general_llm
 
 
 @tool
@@ -29,7 +29,7 @@ def general_qa(question: str, config: RunnableConfig) -> str:
     """
     try:
         logger.info(f"通用问答: {question}")
-        response = general_llm.invoke(question)
+        response = get_general_llm().invoke(question)
         return response.content
     except Exception as e:
         logger.error(f"通用问答失败: {e}")
@@ -61,7 +61,7 @@ def calculate_expression(expression: str, config: RunnableConfig = None) -> str:
         if not all(c in allowed_chars for c in expression):
             logger.info("表达式包含非法字符，交给 LLM 处理")
             prompt = f"请计算以下数学问题，只输出数字结果：\n{expression}"
-            response = general_llm.invoke(prompt)
+            response = get_general_llm().invoke(prompt)
             return response.content
 
         result = _safe_math_eval(expression)

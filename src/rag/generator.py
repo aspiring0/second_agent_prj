@@ -35,8 +35,8 @@ class RAGGenerator:
         self.retriever = VectorRetriever()
         self.enable_relevance_check = enable_relevance_check
 
-        # 使用模型管理器获取LLM实例
-        self.llm = model_manager.get_chat_model(temperature=0.1)
+        # LLM 实例延迟获取，确保每次使用最新的 API Key
+        # 不在 __init__ 中缓存，避免 UI 更新 Key 后仍用旧实例
 
         # --- 使用统一的提示词管理模块 ---
         # 从 PromptManager 获取提示词模板，便于统一管理和版本控制
@@ -55,8 +55,12 @@ class RAGGenerator:
                 logger.warning(f"Reranker 初始化失败: {e}，将不使用重排序")
                 self.enable_reranker = False
 
-        logger.info("✅ RAG Generator 初始化完成，使用统一提示词管理")
-        
+        logger.info("RAG Generator 初始化完成，使用统一提示词管理")
+
+    def _get_llm(self):
+        """延迟获取 LLM 实例，每次调用时从 model_manager 获取最新的"""
+        return model_manager.get_chat_model(temperature=0.1)
+
     def _format_docs(self, docs: List) -> str:
         """
         数据清洗
@@ -87,7 +91,7 @@ class RAGGenerator:
             return 0.0
         
         try:
-            chain = self.relevance_prompt | self.llm | StrOutputParser()
+            chain = self.relevance_prompt | self._get_llm() | StrOutputParser()
             result = chain.invoke({"question": question, "context": context[:1000]})
             
             # 解析分数
@@ -198,7 +202,7 @@ class RAGGenerator:
         logger.info(f"检索上下文长度: {len(context)} 字符")
 
         # 3. 生成回答
-        rag_chain = self.prompt_template | self.llm | StrOutputParser()
+        rag_chain = self.prompt_template | self._get_llm() | StrOutputParser()
 
         try:
             logger.info("调用 LLM 生成回答中...")
@@ -240,7 +244,7 @@ class RAGGenerator:
             answer = "抱歉，知识库中没有找到与您问题相关的内容。"
         else:
             context = self._format_docs([doc for doc, score in docs])
-            rag_chain = self.prompt_template | self.llm | StrOutputParser()
+            rag_chain = self.prompt_template | self._get_llm() | StrOutputParser()
             try:
                 answer = rag_chain.invoke({"context": context, "question": question})
             except Exception as e:

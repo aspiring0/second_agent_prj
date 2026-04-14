@@ -5,7 +5,7 @@ from langchain_core.tools import tool, BaseTool
 from langgraph.config import RunnableConfig
 from typing import List
 
-from ._common import logger, rag_engine, get_chroma_db
+from ._common import logger, get_rag_engine, get_chroma_db
 
 
 @tool
@@ -29,7 +29,7 @@ def ask_knowledge_base(query: str, config: RunnableConfig) -> str:
     session_id = cfg.get("session_id")
     project_id = cfg.get("project_id", "default")
 
-    return rag_engine.get_answer(query, session_id=session_id, project_id=project_id)
+    return get_rag_engine().get_answer(query, session_id=session_id, project_id=project_id)
 
 
 @tool

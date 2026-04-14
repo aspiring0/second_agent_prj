@@ -1,23 +1,26 @@
 # src/agent/tools_dir/_common.py
-"""工具模块共享状态"""
+"""工具模块共享状态 — 延迟初始化，支持 UI 动态更新 API Key"""
 
-from langchain_openai import ChatOpenAI
-from src.rag.generator import RAGGenerator
 from config.settings import settings
 from src.utils.logger import setup_logger
 
 logger = setup_logger("Agent_Tools")
 
-# RAG 引擎（全局单例）
-rag_engine = RAGGenerator()
+# 懒加载单例
+_rag_engine = None
+_general_llm = None
 
-# 通用 LLM（用于通用问答和文本处理）
-general_llm = ChatOpenAI(
-    model=settings.CHAT_MODEL,
-    temperature=0.7,
-    openai_api_key=settings.OPENAI_API_KEY,
-    openai_api_base=settings.OPENAI_BASE_URL
-)
+
+def get_rag_engine():
+    """延迟获取 RAG 引擎（每次创建新实例，确保用最新 Key）"""
+    from src.rag.generator import RAGGenerator
+    return RAGGenerator()
+
+
+def get_general_llm():
+    """延迟获取通用 LLM（每次从 model_manager 获取，确保用最新 Key）"""
+    from src.utils.model_manager import model_manager
+    return model_manager.get_chat_model(temperature=0.7)
 
 
 def get_chroma_db():

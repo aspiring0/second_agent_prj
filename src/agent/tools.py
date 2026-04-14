@@ -3,27 +3,20 @@
 # 使其可以被智能体（Agent）调用和使用。
 from langchain_core.tools import tool
 from langgraph.config import RunnableConfig
-from langchain_openai import ChatOpenAI
-#导入RAG生成器
 from src.rag.generator import RAGGenerator
-from config.settings import settings
 from src.utils.logger import setup_logger
 import datetime
 import json
 
 logger = setup_logger("Agent_Tools")
 
-# 初始化 RAG 引擎 (只会初始化一次)
-# 这里实例化 RAGGenerator，连接数据库和 LLM
-rag_engine = RAGGenerator()
+# 延迟获取 RAG 引擎和通用 LLM，确保使用最新的 API Key
+def _get_rag_engine():
+    return RAGGenerator()
 
-# 初始化通用 LLM（用于通用问答）
-general_llm = ChatOpenAI(
-    model=settings.CHAT_MODEL,
-    temperature=0.7,
-    openai_api_key=settings.OPENAI_API_KEY,
-    openai_api_base=settings.OPENAI_BASE_URL
-)
+def _get_general_llm():
+    from src.utils.model_manager import model_manager
+    return model_manager.get_chat_model(temperature=0.7)
 
 # 初始化向量数据库连接（用于元数据查询）
 def get_chroma_db():
@@ -66,7 +59,7 @@ def general_qa(question: str, config: RunnableConfig) -> str:
     """
     try:
         logger.info(f"🔧 通用问答: {question}")
-        response = general_llm.invoke(question)
+        response = _get_general_llm().invoke(question)
         return response.content
     except Exception as e:
         logger.error(f"通用问答失败: {e}")
@@ -88,7 +81,7 @@ def summarize_text(text: str, config: RunnableConfig) -> str:
 {text}
 
 摘要："""
-        response = general_llm.invoke(prompt)
+        response = _get_general_llm().invoke(prompt)
         return response.content
     except Exception as e:
         logger.error(f"总结失败: {e}")
@@ -108,7 +101,7 @@ def translate_text(text: str, target_language: str = "中文", config: RunnableC
         prompt = f"""请将以下文本翻译成{target_language}，只输出翻译结果：
 
 {text}"""
-        response = general_llm.invoke(prompt)
+        response = _get_general_llm().invoke(prompt)
         return response.content
     except Exception as e:
         logger.error(f"翻译失败: {e}")
@@ -138,7 +131,7 @@ def analyze_code(code: str, language: str = "auto", config: RunnableConfig = Non
 4. 代码质量评分（1-10分）
 
 分析结果："""
-        response = general_llm.invoke(prompt)
+        response = _get_general_llm().invoke(prompt)
         return response.content
     except Exception as e:
         logger.error(f"代码分析失败: {e}")
@@ -170,7 +163,7 @@ def calculate_expression(expression: str, config: RunnableConfig = None) -> str:
             # 使用 LLM 处理复杂的数学问题
             logger.info("表达式包含非法字符，交给 LLM 处理")
             prompt = f"请计算以下数学问题，只输出数字结果：\n{expression}"
-            response = general_llm.invoke(prompt)
+            response = _get_general_llm().invoke(prompt)
             return response.content
 
         # 安全的数学解析器：逐字符解析，支持 + - * / % ( )
@@ -492,4 +485,4 @@ def ask_knowledge_base(query: str, config: RunnableConfig) -> str:
     session_id = cfg.get("session_id")
     project_id = cfg.get("project_id", "default")
 
-    return rag_engine.get_answer(query, session_id=session_id, project_id=project_id)
+    return _get_rag_engine().get_answer(query, session_id=session_id, project_id=project_id)

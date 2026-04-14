@@ -5,7 +5,7 @@ from langchain_core.tools import tool, BaseTool
 from langgraph.config import RunnableConfig
 from typing import List
 
-from ._common import logger, general_llm
+from ._common import logger, get_general_llm
 
 
 @tool
@@ -24,7 +24,7 @@ def summarize_text(text: str, config: RunnableConfig) -> str:
 {text}
 
 摘要："""
-        response = general_llm.invoke(prompt)
+        response = get_general_llm().invoke(prompt)
         return response.content
     except Exception as e:
         logger.error(f"总结失败: {e}")
@@ -45,7 +45,7 @@ def translate_text(text: str, target_language: str = "中文", config: RunnableC
         prompt = f"""请将以下文本翻译成{target_language}，只输出翻译结果：
 
 {text}"""
-        response = general_llm.invoke(prompt)
+        response = get_general_llm().invoke(prompt)
         return response.content
     except Exception as e:
         logger.error(f"翻译失败: {e}")
@@ -76,7 +76,7 @@ def analyze_code(code: str, language: str = "auto", config: RunnableConfig = Non
 4. 代码质量评分（1-10分）
 
 分析结果："""
-        response = general_llm.invoke(prompt)
+        response = get_general_llm().invoke(prompt)
         return response.content
     except Exception as e:
         logger.error(f"代码分析失败: {e}")
