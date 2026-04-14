@@ -27,8 +27,8 @@ import time
 logger = setup_logger("RAG_Generator")
 
 # 相关性阈值配置
-RELEVANCE_THRESHOLD = 0.3  # 低于此分数认为不相关
-SCORE_THRESHOLD = 1.5     # 向量距离阈值（越小越相关）
+RELEVANCE_THRESHOLD = 0.15  # 低于此分数认为不相关（放宽，减少误拒）
+SCORE_THRESHOLD = 2.0      # 向量距离阈值（越小越相关）
 
 class RAGGenerator:
     def __init__(self, enable_relevance_check: bool = True):
@@ -194,7 +194,7 @@ class RAGGenerator:
             print(f"📄 片段 {i+1} (匹配分 {score:.2f}):\n{doc.page_content.strip()[:100]}...")
         print("="*60 + "\n")
         
-        context = self._format_docs([doc for doc, score in docs])
+        context = self._format_docs_with_scores(docs)
         logger.info(f"检索上下文长度: {len(context)} 字符")
 
         # 3. 生成回答

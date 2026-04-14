@@ -32,6 +32,25 @@ if settings.ENABLE_QUERY_REWRITE:
 workflow = StateGraph(AgentState)
 
 # 2. 添加节点
+# 状态初始化节点 — 设置所有字段默认值，防止 None 引发异常
+def initializer_node(state: AgentState) -> dict:
+    """初始化 AgentState 的默认值"""
+    return {
+        "retrieval_quality": "sufficient",
+        "retrieval_attempts": 0,
+        "max_retrieval_attempts": 3,
+        "verification_result": "pass",
+        "verification_issues": [],
+        "confidence_score": 0.0,
+        "verification_attempts": 0,
+        "rewritten_queries": [],
+        "query_type": "simple",
+        "original_query": "",
+        "next_step": "",
+    }
+
+workflow.add_node("initializer", initializer_node)
+
 if settings.ENABLE_QUERY_REWRITE:
     workflow.add_node("query_rewriter", query_rewriter_node)
 
@@ -41,12 +60,12 @@ workflow.add_node("tools", ToolNode(all_tools))
 workflow.add_node("retrieval_evaluator", retrieval_evaluator_node)
 workflow.add_node("answer_verifier", answer_verifier_node)
 
-# 3. 入口点
+# 3. 入口点 — 统一从 initializer 开始
+workflow.set_entry_point("initializer")
+workflow.add_edge("initializer", "query_rewriter" if settings.ENABLE_QUERY_REWRITE else "researcher")
+
 if settings.ENABLE_QUERY_REWRITE:
-    workflow.set_entry_point("query_rewriter")
     workflow.add_edge("query_rewriter", "researcher")
-else:
-    workflow.set_entry_point("researcher")
 
 # 4. researcher → tools 或 writer
 def should_continue(state: AgentState):

@@ -136,7 +136,7 @@ def _format_conversation_history(messages) -> str:
         elif msg_type == 'tool':
             # 工具返回结果，通常内容较长，截取关键部分
             tool_name = getattr(msg, 'name', 'unknown')
-            content_preview = content[:500] + "..." if len(content) > 500 else content
+            content_preview = content[:2000] + "..." if len(content) > 2000 else content
             formatted_lines.append(f"🔧 [工具-{tool_name}]: {content_preview}")
         else:
             formatted_lines.append(f"【{msg_type}】: {content}")
